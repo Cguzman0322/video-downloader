@@ -9,10 +9,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
-const YT_DLP = path.join(
-  process.env.HOME,
-  'Library/Python/3.9/bin/yt-dlp'
-);
+const YT_DLP = '/opt/homebrew/bin/yt-dlp';
 
 const activeDownloads = new Map();
 
@@ -23,13 +20,18 @@ function detectPlatform(url) {
   return 'unknown';
 }
 
+const UNSUPPORTED_PLATFORMS = new Set(['instagram']);
+
 app.post('/api/info', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
 
   const platform = detectPlatform(url);
   if (platform === 'unknown') {
-    return res.status(400).json({ error: 'Unsupported platform. Use YouTube, Instagram, or TikTok URLs.' });
+    return res.status(400).json({ error: 'Unsupported platform. Use YouTube or TikTok URLs.' });
+  }
+  if (UNSUPPORTED_PLATFORMS.has(platform)) {
+    return res.status(400).json({ error: 'Instagram is not supported due to platform restrictions.' });
   }
 
   const args = ['--dump-json', '--no-playlist', url];
