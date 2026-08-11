@@ -254,23 +254,32 @@ app.post('/api/download', (req, res) => {
     return;
   }
 
-  const args = ['--no-playlist', '--newline', '--progress'];
+  const args = ['--no-playlist', '--newline', '--progress', '--force-overwrites'];
   if (platform === 'instagram' && fs.existsSync(COOKIES_FILE)) {
     args.push('--cookies', COOKIES_FILE);
   }
 
   if (audioOnly) {
     args.push('-x', '--audio-format', 'mp3');
-  } else if (formatId) {
-    args.push('-f', formatId);
   } else {
-    args.push('-f', 'best');
+    if (formatId) {
+      args.push('-f', `${formatId}+bestaudio/${formatId}/best`);
+    } else {
+      args.push('-f', 'bestvideo+bestaudio/best');
+    }
+    args.push('--merge-output-format', 'mp4',
+      '--postprocessor-args', 'ffmpeg:-c:v libx264 -preset fast -crf 18 -c:a aac -b:a 192k');
   }
 
   args.push('-o', path.join(DOWNLOADS_DIR, '%(title)s.%(ext)s'));
   args.push(url);
 
+  console.log('[download] spawning:', YT_DLP, args.join(' '));
   const proc = spawn(YT_DLP, args);
+
+  proc.on('error', (err) => {
+    console.error('[spawn error]', err);
+  });
 
   activeDownloads.set(id, {
     proc,
@@ -310,7 +319,10 @@ app.post('/api/download', (req, res) => {
     }
   });
 
-  proc.stderr.on('data', (d) => (stderr += d));
+  proc.stderr.on('data', (d) => {
+    stderr += d;
+    console.error('[yt-dlp]', d.toString().trim());
+  });
 
   proc.on('close', (code) => {
     const dl = activeDownloads.get(id);

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>vidsave</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23111'/><polygon points='13,8 24,16 13,24' fill='%23C8E619'/></svg>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -264,8 +265,9 @@
       height: 18px;
       background: var(--accent);
       border-radius: 50%;
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
 
@@ -861,7 +863,9 @@
         <div class="url-field">
           <svg class="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
           <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." autofocus>
-          <button class="paste-btn" onclick="pasteFromClipboard()">Paste</button>
+          <button class="paste-btn" id="clearInput" onclick="clearUrlInput()" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
 
         <button class="download-btn" id="fetchBtn" onclick="fetchInfo()">
@@ -871,9 +875,9 @@
       </div>
 
       <div class="hero-checks">
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> No signup</span>
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> Private</span>
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> Free</span>
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> No signup</span>
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> Private</span>
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> Free</span>
       </div>
     </div>
 
@@ -1024,10 +1028,16 @@
   <div class="downloads-section" id="downloadsSection">
     <div class="downloads-header">
       <h3>Recent Downloads</h3>
-      <button class="open-folder-btn" onclick="openDownloads()">
-        Open folder
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-      </button>
+      <div style="display:flex;gap:8px">
+        <button class="open-folder-btn" onclick="clearDownloads()">
+          Clear
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <button class="open-folder-btn" onclick="openDownloads()">
+          Open folder
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        </button>
+      </div>
     </div>
     <div class="downloads-list" id="downloadsList"></div>
   </div>
@@ -1115,13 +1125,15 @@
       setTimeout(() => urlInput.focus(), 400);
     }
 
-    async function pasteFromClipboard() {
-      try {
-        const text = await navigator.clipboard.readText();
-        urlInput.value = text;
-        urlInput.focus();
-      } catch { urlInput.focus(); }
+    function clearUrlInput() {
+      urlInput.value = '';
+      document.getElementById('clearInput').style.display = 'none';
+      urlInput.focus();
     }
+
+    urlInput.addEventListener('input', () => {
+      document.getElementById('clearInput').style.display = urlInput.value.trim() ? 'flex' : 'none';
+    });
 
     function showError(msg) {
       document.getElementById('errorText').textContent = msg;
@@ -1313,6 +1325,11 @@
           list.appendChild(d);
         });
       } catch {}
+    }
+
+    function clearDownloads() {
+      document.getElementById('downloadsList').innerHTML = '';
+      document.getElementById('downloadsSection').style.display = 'none';
     }
 
     async function openDownloads() { await fetch('/api/open-downloads'); }
