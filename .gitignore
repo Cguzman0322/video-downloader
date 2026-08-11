@@ -1,3 +1,4 @@
 node_modules/
 downloads/
-.DS_Store
+cookies.txt
+yt-dlp-bin

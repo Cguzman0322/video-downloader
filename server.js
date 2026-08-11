@@ -1,17 +1,19 @@
 const express = require('express');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const https = require('https');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
-const YT_DLP = '/opt/homebrew/bin/yt-dlp';
-
+const YT_DLP = path.join(__dirname, 'yt-dlp-bin');
+const COOKIES_FILE = path.join(__dirname, 'cookies.txt');
 const activeDownloads = new Map();
+
 
 function detectPlatform(url) {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
@@ -20,7 +22,77 @@ function detectPlatform(url) {
   return 'unknown';
 }
 
-const UNSUPPORTED_PLATFORMS = new Set(['instagram']);
+const UNSUPPORTED_PLATFORMS = new Set();
+
+function httpsGet(url) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+      },
+    };
+    https.get(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch { reject(new Error('Invalid JSON response')); }
+      });
+    }).on('error', reject);
+  });
+}
+
+async function tikwmInfo(url) {
+  const encoded = encodeURIComponent(url);
+  const data = await httpsGet(`https://www.tikwm.com/api/?url=${encoded}&hd=1`);
+  if (data.code !== 0 || !data.data) throw new Error(data.msg || 'TikWM API failed');
+  const d = data.data;
+  const formats = [];
+  if (d.hdplay) formats.push({ format_id: 'hd', ext: 'mp4', resolution: '1080p', height: 1080, filesize: d.hd_size || null, hasVideo: true, hasAudio: true, note: 'HD' });
+  if (d.play) formats.push({ format_id: 'sd', ext: 'mp4', resolution: '720p', height: 720, filesize: d.size || null, hasVideo: true, hasAudio: true, note: 'SD' });
+  return {
+    platform: 'tiktok',
+    title: d.title || 'TikTok Video',
+    thumbnail: d.cover || d.origin_cover || null,
+    duration: d.duration || 0,
+    uploader: d.author?.nickname || d.author?.unique_id || '',
+    videoFormats: formats,
+    audioFormats: d.music ? [{ format_id: 'audio', ext: 'mp3', hasVideo: false, hasAudio: true }] : [],
+    _tikwm: { play: d.play, hdplay: d.hdplay, music: d.music },
+  };
+}
+
+async function tikwmDownload(downloadUrl, destPath) {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(downloadUrl);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+    };
+    const doGet = (opts) => {
+      https.get(opts, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          const redir = new URL(res.headers.location);
+          doGet({ hostname: redir.hostname, path: redir.pathname + redir.search, headers: opts.headers });
+          return;
+        }
+        if (res.statusCode !== 200) { reject(new Error('Download HTTP ' + res.statusCode)); return; }
+        const total = parseInt(res.headers['content-length'], 10) || 0;
+        let received = 0;
+        const file = fs.createWriteStream(destPath);
+        res.on('data', (chunk) => { received += chunk.length; file.write(chunk); });
+        res.on('end', () => { file.end(); resolve({ size: received, total }); });
+        res.on('error', reject);
+      }).on('error', reject);
+    };
+    doGet(options);
+  });
+}
 
 app.post('/api/info', async (req, res) => {
   const { url } = req.body;
@@ -28,13 +100,27 @@ app.post('/api/info', async (req, res) => {
 
   const platform = detectPlatform(url);
   if (platform === 'unknown') {
-    return res.status(400).json({ error: 'Unsupported platform. Use YouTube or TikTok URLs.' });
+    return res.status(400).json({ error: 'Unsupported platform. Use YouTube, TikTok, or Instagram URLs.' });
   }
   if (UNSUPPORTED_PLATFORMS.has(platform)) {
-    return res.status(400).json({ error: 'Instagram is not supported due to platform restrictions.' });
+    return res.status(400).json({ error: 'This platform is not currently supported.' });
   }
 
-  const args = ['--dump-json', '--no-playlist', url];
+  if (platform === 'tiktok') {
+    try {
+      const info = await tikwmInfo(url);
+      return res.json(info);
+    } catch (e) {
+      console.error('TikWM fallback error:', e.message);
+      return res.status(500).json({ error: 'Failed to fetch TikTok video. Check the URL.' });
+    }
+  }
+
+  const args = ['--dump-json', '--no-playlist'];
+  if (platform === 'instagram' && fs.existsSync(COOKIES_FILE)) {
+    args.push('--cookies', COOKIES_FILE);
+  }
+  args.push(url);
   const proc = spawn(YT_DLP, args);
 
   let stdout = '';
@@ -47,7 +133,7 @@ app.post('/api/info', async (req, res) => {
     if (code !== 0) {
       console.error('yt-dlp info error:', stderr);
       const msg = stderr.includes('is not a valid URL') || stderr.includes('Unsupported URL')
-        ? 'Unsupported or invalid URL. Try a YouTube, Instagram, or TikTok link.'
+        ? 'Unsupported or invalid URL. Try a YouTube, TikTok, or Instagram link.'
         : stderr.includes('Private video') || stderr.includes('Sign in')
         ? 'This video is private or requires sign-in.'
         : stderr.includes('Video unavailable')
@@ -123,12 +209,55 @@ app.post('/api/info', async (req, res) => {
 });
 
 app.post('/api/download', (req, res) => {
-  const { url, formatId, audioOnly } = req.body;
+  const { url, formatId, audioOnly, _tikwm } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
 
+  const platform = detectPlatform(url);
   const id = crypto.randomBytes(8).toString('hex');
 
+  if (platform === 'tiktok') {
+    activeDownloads.set(id, { progress: 0, status: 'downloading', filename: null, error: null });
+    res.json({ id });
+
+    (async () => {
+      const dl = activeDownloads.get(id);
+      try {
+        let info = _tikwm;
+        if (!info || (!info.play && !info.hdplay)) {
+          const result = await tikwmInfo(url);
+          info = result._tikwm;
+        }
+        let downloadUrl;
+        if (audioOnly && info.music) downloadUrl = info.music;
+        else if (formatId === 'hd' && info.hdplay) downloadUrl = info.hdplay;
+        else downloadUrl = info.play || info.hdplay;
+
+        if (!downloadUrl) { dl.status = 'error'; dl.error = 'No download URL found'; return; }
+
+        const ext = audioOnly ? 'mp3' : 'mp4';
+        const safeName = (url.match(/video\/(\d+)/) || ['', 'tiktok_' + Date.now()])[1];
+        const filename = `tiktok_${safeName}.${ext}`;
+        const destPath = path.join(DOWNLOADS_DIR, filename);
+
+        dl.filename = filename;
+        dl.progress = 10;
+
+        await tikwmDownload(downloadUrl, destPath);
+        dl.progress = 100;
+        dl.status = 'complete';
+      } catch (e) {
+        dl.status = 'error';
+        dl.error = e.message || 'TikTok download failed';
+        console.error('TikTok download error:', e.message);
+      }
+    })();
+    return;
+  }
+
   const args = ['--no-playlist', '--newline', '--progress'];
+  if (platform === 'instagram' && fs.existsSync(COOKIES_FILE)) {
+    args.push('--cookies', COOKIES_FILE);
+  }
 
   if (audioOnly) {
     args.push('-x', '--audio-format', 'mp3');

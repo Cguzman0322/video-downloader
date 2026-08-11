@@ -14,7 +14,7 @@
       --black: #111;
       --gray: #888;
       --border: #E0DFDB;
-      --accent: #D4E823;
+      --accent: #C8E619;
       --card: #FFFFFF;
       --radius: 14px;
     }
@@ -87,10 +87,17 @@
       padding: 8px 20px;
       border-radius: 100px;
       text-decoration: none;
-      transition: border-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .nav-pill:hover { border-color: #ccc; }
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
 
     /* ─── HERO ─── */
     .hero {
@@ -101,35 +108,48 @@
       grid-template-columns: 1fr 1fr;
       gap: 80px;
       align-items: start;
-      min-height: auto;
     }
 
-    .hero-left {
-      padding-top: 8px;
+    .hero-left { padding-top: 8px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: 24px;
     }
+
+    .hero-badge svg { flex-shrink: 0; }
 
     .hero h1 {
       font-weight: 900;
-      line-height: 0.85;
-      letter-spacing: -0.01em;
+      line-height: 0.88;
+      letter-spacing: -0.02em;
       color: #0B0B0B;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
     }
 
     .hero h1 .line1 {
       display: block;
-      font-size: clamp(56px, 7vw, 92px);
+      font-size: clamp(56px, 7vw, 88px);
     }
 
     .hero h1 .line2 {
       display: block;
-      font-size: clamp(68px, 8.5vw, 110px);
+      font-size: clamp(64px, 8vw, 100px);
     }
 
     .hero h1 .accent-dot {
       display: inline-block;
-      width: clamp(16px, 2vw, 26px);
-      height: clamp(16px, 2vw, 26px);
+      width: clamp(14px, 1.8vw, 22px);
+      height: clamp(14px, 1.8vw, 22px);
       background: var(--accent);
       border-radius: 50%;
       vertical-align: baseline;
@@ -139,17 +159,15 @@
     }
 
     .hero-sub {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 400;
       color: var(--gray);
       line-height: 1.6;
       max-width: 380px;
-      margin-bottom: 48px;
+      margin-bottom: 32px;
     }
 
-    .hero-input-group {
-      max-width: 480px;
-    }
+    .hero-input-group { max-width: 440px; }
 
     .url-field {
       display: flex;
@@ -157,23 +175,30 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 6px 6px 6px 20px;
-      margin-bottom: 16px;
+      padding: 6px 6px 6px 16px;
+      margin-bottom: 14px;
       transition: border-color 0.2s;
     }
 
     .url-field:focus-within { border-color: #ccc; }
+
+    .url-field .link-icon {
+      flex-shrink: 0;
+      color: var(--gray);
+      margin-right: 8px;
+    }
 
     .url-field input {
       flex: 1;
       border: none;
       background: none;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 400;
       color: var(--black);
       outline: none;
-      padding: 12px 0;
+      padding: 10px 0;
+      min-width: 0;
     }
 
     .url-field input::placeholder { color: #bbb; }
@@ -181,34 +206,34 @@
     .paste-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
+      gap: 0;
+      padding: 8px 14px;
       font-family: inherit;
       font-size: 13px;
       font-weight: 600;
       color: var(--black);
-      background: var(--bg);
-      border: 1px solid var(--border);
+      background: var(--accent);
+      border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: opacity 0.15s;
       flex-shrink: 0;
     }
 
-    .paste-btn:hover { background: #eae9e5; }
+    .paste-btn:hover { opacity: 0.85; }
 
     .download-btn {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      padding: 18px 32px;
+      gap: 10px;
+      padding: 16px 32px;
       font-family: inherit;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      color: #fff;
-      background: var(--black);
+      color: var(--black);
+      background: var(--accent);
       border: none;
       border-radius: 100px;
       cursor: pointer;
@@ -216,37 +241,36 @@
     }
 
     .download-btn:hover { opacity: 0.85; }
-    .download-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .download-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .download-btn .btn-arrow {
-      width: 24px;
-      height: 24px;
+    .hero-checks {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+    }
+
+    .hero-checks span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .check-icon {
+      width: 18px;
+      height: 18px;
       background: var(--accent);
       border-radius: 50%;
       display: grid;
       place-items: center;
-    }
-
-    .hero-platforms {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-top: 32px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--gray);
-    }
-
-    .hero-platforms span {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      flex-shrink: 0;
     }
 
     /* ─── BROWSER MOCKUP ─── */
-    .hero-right {
-      padding-top: 20px;
-    }
+    .hero-right { padding-top: 0; }
 
     .browser {
       background: var(--card);
@@ -260,17 +284,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
     }
 
-    .browser-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--border);
-    }
-
+    .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
     .browser-dot:nth-child(1) { background: #FF6058; }
     .browser-dot:nth-child(2) { background: #FFC02F; }
     .browser-dot:nth-child(3) { background: #27CA40; }
@@ -278,92 +296,112 @@
     .browser-url {
       flex: 1;
       margin-left: 12px;
-      padding: 6px 14px;
+      padding: 5px 12px;
       background: var(--bg);
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--gray);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .browser-body {
-      padding: 28px;
-    }
+    .browser-body { padding: 20px; }
 
     .mock-thumb {
       width: 100%;
-      height: 200px;
+      height: 180px;
       background: linear-gradient(135deg, #e8e7e3 0%, #d8d7d3 100%);
       border-radius: 12px;
       display: grid;
       place-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       position: relative;
+      overflow: hidden;
     }
 
     .mock-play {
-      width: 52px;
-      height: 52px;
-      background: var(--black);
+      width: 48px;
+      height: 48px;
+      background: rgba(0,0,0,0.6);
       border-radius: 50%;
       display: grid;
       place-items: center;
-      opacity: 0.9;
     }
 
     .mock-duration {
       position: absolute;
-      bottom: 10px;
-      right: 12px;
-      background: rgba(0,0,0,0.7);
-      color: #fff;
+      bottom: 8px;
+      right: 10px;
+      background: var(--accent);
+      color: var(--black);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       padding: 3px 8px;
       border-radius: 4px;
     }
 
+    .mock-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .mock-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mock-meta-text { flex: 1; min-width: 0; }
+
     .mock-title {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 4px;
-      letter-spacing: -0.3px;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .mock-channel {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--gray);
-      margin-bottom: 24px;
     }
 
     .mock-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--gray);
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .mock-formats {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-bottom: 20px;
+      gap: 5px;
+      margin-bottom: 16px;
     }
 
     .mock-format {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
+      padding: 10px 12px;
       background: var(--bg);
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
+      border: 2px solid transparent;
     }
 
     .mock-format.active {
-      border: 2px solid var(--black);
+      border-color: var(--black);
       background: #fff;
     }
 
@@ -381,12 +419,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      margin-right: 10px;
+      margin-right: 8px;
     }
 
-    .mock-format.active .mf-dot {
-      border-color: var(--black);
-    }
+    .mock-format.active .mf-dot { border-color: var(--black); }
 
     .mock-format.active .mf-dot::after {
       content: '';
@@ -398,190 +434,179 @@
 
     .mock-dl-btn {
       width: 100%;
-      padding: 14px;
-      background: var(--black);
-      color: #fff;
+      padding: 12px;
+      background: var(--accent);
+      color: var(--black);
       font-family: inherit;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       border: none;
       border-radius: 100px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
-    /* ─── FEATURES STRIP ─── */
-    .features-strip {
+    /* ─── FEATURES ─── */
+    .features-section {
       max-width: 1340px;
       margin: 0 auto;
       padding: 48px 60px 0;
     }
 
-    .features-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 104px;
-      padding: 36px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
     }
 
-    .feature-item {
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
       display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--black);
+      align-items: flex-start;
+      gap: 14px;
     }
 
-    .feature-item .fi-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--accent);
-      border-radius: 8px;
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       display: grid;
       place-items: center;
       flex-shrink: 0;
     }
 
-    /* ─── HOW IT WORKS ─── */
-    .how-section {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 40px 60px 48px;
-    }
-
-    .how-header {
-      margin-bottom: 8px;
-    }
-
-    .how-header h2 {
-      font-size: clamp(32px, 4vw, 48px);
-      font-weight: 900;
-      letter-spacing: -1.5px;
-      line-height: 1;
-    }
-
-    .how-subtitle {
-      font-size: 16px;
-      color: var(--gray);
-      margin-bottom: 36px;
-    }
-
-    .how-steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .how-step {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px 28px 36px;
-    }
-
-    .step-number {
-      font-size: 48px;
-      font-weight: 900;
-      color: var(--border);
-      line-height: 1;
-      margin-bottom: 24px;
-      letter-spacing: -2px;
-    }
-
-    .step-icon-wrap {
-      margin-bottom: 24px;
-    }
-
-    .step-content h3 {
-      font-size: 18px;
+    .feature-text h4 {
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -0.3px;
+      margin-bottom: 2px;
     }
 
-    .step-content p {
-      font-size: 13px;
+    .feature-text p {
+      font-size: 12px;
       color: var(--gray);
-      line-height: 1.6;
+      line-height: 1.4;
     }
 
-    /* ─── CTA ─── */
-    .cta-section {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 0 60px 48px;
-    }
-
-    .cta-block {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 36px 48px;
-      background: var(--black);
-      border-radius: 20px;
-    }
-
-    .cta-block h3 {
-      font-size: clamp(28px, 3.5vw, 44px);
-      font-weight: 900;
-      color: #fff;
-      letter-spacing: -1.5px;
-      line-height: 1.1;
-      max-width: 480px;
-    }
-
-    .cta-block h3 .accent-dot { color: var(--accent); }
-
-    .cta-go-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 18px 36px;
-      background: var(--accent);
-      color: var(--black);
-      font-family: inherit;
-      font-size: 16px;
-      font-weight: 700;
-      border: none;
-      border-radius: 100px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: opacity 0.2s;
-      flex-shrink: 0;
-    }
-
-    .cta-go-btn:hover { opacity: 0.85; }
-
-    /* ─── PROGRESS ─── */
-    .progress-section {
+    /* ─── DOWNLOADS ─── */
+    .downloads-section {
       display: none;
       max-width: 1340px;
       margin: 0 auto;
-      padding: 0 60px 40px;
+      padding: 40px 60px 0;
     }
 
-    .progress-section.visible { display: block; }
-
-    .progress-card {
-      max-width: 480px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-    }
-
-    .progress-top {
+    .downloads-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 14px;
     }
 
+    .downloads-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .open-folder-btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .open-folder-btn:hover { border-color: #ccc; }
+
+    .downloads-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .download-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .dl-thumb {
+      width: 52px;
+      height: 52px;
+      background: var(--border);
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .dl-info { flex: 1; min-width: 0; }
+
+    .dl-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dl-meta {
+      font-size: 11px;
+      color: var(--gray);
+      margin-top: 2px;
+    }
+
+    .dl-date {
+      font-size: 11px;
+      color: var(--gray);
+      flex-shrink: 0;
+    }
+
+    /* ─── PROGRESS ─── */
+    .progress-section {
+      display: none;
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 0 60px 20px;
+    }
+
+    .progress-section.visible { display: block; }
+
+    .progress-card {
+      max-width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
     .progress-label {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       max-width: 75%;
       overflow: hidden;
@@ -589,10 +614,7 @@
       white-space: nowrap;
     }
 
-    .progress-pct {
-      font-size: 14px;
-      font-weight: 800;
-    }
+    .progress-pct { font-size: 13px; font-weight: 800; }
 
     .progress-bar-track {
       height: 6px;
@@ -614,21 +636,20 @@
       display: none;
       max-width: 1340px;
       margin: 0 auto;
-      padding: 0 60px 20px;
+      padding: 0 60px 16px;
     }
 
     .success-msg.visible { display: block; }
 
     .success-inner {
-      max-width: 480px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 16px 20px;
+      gap: 8px;
+      padding: 14px 18px;
       background: #F0FAF0;
       border: 1px solid #C6E7C6;
       border-radius: var(--radius);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #1a7a1a;
     }
@@ -644,88 +665,120 @@
     .error-msg.visible { display: block; }
 
     .error-inner {
-      max-width: 480px;
-      padding: 14px 20px;
+      padding: 14px 18px;
       background: #FEF2F2;
       border: 1px solid #FECACA;
       border-radius: var(--radius);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: #dc2626;
       margin-bottom: 16px;
     }
 
-    /* ─── DOWNLOADS LIST ─── */
-    .downloads-section {
-      display: none;
+    /* ─── HOW IT WORKS ─── */
+    .how-section {
       max-width: 1340px;
       margin: 0 auto;
-      padding: 0 60px 60px;
+      padding: 56px 60px 48px;
     }
 
-    .downloads-wrap {
-      max-width: 480px;
-    }
-
-    .downloads-header {
+    .how-header {
+      text-align: center;
+      margin-bottom: 8px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .how-line {
+      width: 60px;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .how-header h2 {
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 900;
+      letter-spacing: -1px;
+      font-style: italic;
+    }
+
+    .how-subtitle {
+      text-align: center;
+      font-size: 15px;
+      color: var(--gray);
+      margin-bottom: 40px;
+    }
+
+    .how-steps {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .how-step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px 32px;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .step-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 14px;
     }
 
-    .downloads-header h3 {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .open-folder-btn {
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gray);
-      background: none;
+    .step-icon-circle {
+      width: 44px;
+      height: 44px;
+      background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 6px 14px;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .open-folder-btn:hover { border-color: #ccc; }
-
-    .downloads-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .download-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-    }
-
-    .download-name {
-      font-size: 13px;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 340px;
-    }
-
-    .download-size {
-      font-size: 12px;
-      color: var(--gray);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
       flex-shrink: 0;
     }
 
-    /* ─── MODAL ─── */
+    .step-number-badge {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--black);
+      flex-shrink: 0;
+    }
+
+    .step-content h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 12px;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .step-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      padding-top: 40px;
+      color: var(--border);
+    }
+
     /* ─── FOOTER ─── */
     footer {
       max-width: 1340px;
@@ -736,20 +789,10 @@
     .footer-inner {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      gap: 6px;
       padding-top: 32px;
       border-top: 1px solid var(--border);
-    }
-
-    .footer-left {
-      font-size: 12px;
-      color: var(--gray);
-    }
-
-    .footer-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
       font-size: 12px;
       color: var(--gray);
     }
@@ -760,42 +803,29 @@
       .nav-link { display: none; }
       .hero {
         grid-template-columns: 1fr;
-        padding: 40px 28px 0;
-        gap: 60px;
-        min-height: auto;
+        padding: 24px 28px 0;
+        gap: 40px;
       }
       .hero-left { padding-top: 0; }
-      .hero h1 { letter-spacing: -2px; }
-      .hero-right { padding-top: 0; }
-      .features-strip { padding: 48px 28px 0; }
-      .features-row { flex-wrap: wrap; gap: 24px; }
-      .how-section { padding: 40px 28px 48px; }
-      .how-steps { grid-template-columns: 1fr; gap: 16px; }
-      .how-header { margin-bottom: 8px; }
-      .cta-section { padding: 0 28px 56px; }
-      .cta-block {
-        flex-direction: column;
-        gap: 32px;
-        text-align: center;
-        padding: 48px 32px;
-      }
+      .features-section { padding: 40px 28px 0; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-section { padding: 48px 28px; }
+      .how-steps { flex-direction: column; align-items: center; }
+      .step-arrow { display: none; }
+      .how-step { max-width: 100%; }
+      .downloads-section { padding: 32px 28px 0; }
       .progress-section,
       .success-msg,
-      .error-msg,
-      .downloads-section { padding-left: 28px; padding-right: 28px; }
+      .error-msg { padding-left: 28px; padding-right: 28px; }
       footer { padding: 0 28px 40px; }
     }
 
     @media (max-width: 600px) {
-      .hero h1 { font-size: 48px; letter-spacing: -1.5px; }
-      .hero-sub { font-size: 15px; }
-      .hero-platforms { flex-wrap: wrap; gap: 12px; }
-      .how-header h2 { font-size: 32px; }
-      .step-number { font-size: 56px; }
-      .cta-block h3 { font-size: 24px; }
-      .features-row { gap: 16px; }
-      .feature-item { font-size: 13px; }
-      .download-name { max-width: 200px; }
+      .hero h1 .line1 { font-size: 48px; }
+      .hero h1 .line2 { font-size: 56px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-checks { flex-wrap: wrap; gap: 12px; }
+      .dl-name { max-width: 180px; }
     }
   </style>
 </head>
@@ -812,65 +842,69 @@
     <div class="nav-right">
       <a href="#how" class="nav-link">How it works</a>
       <a href="#features" class="nav-link">Features</a>
-      <a href="#" class="nav-pill">No signup needed</a>
+      <a href="#" class="nav-pill"><span class="nav-dot"></span> No signup needed</a>
     </div>
   </nav>
 
   <!-- HERO -->
   <section class="hero">
     <div class="hero-left">
+      <div class="hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Fast. Private. No Signup.
+      </div>
+
       <h1><span class="line1">Save</span><span class="line2">Videos<span class="accent-dot"></span></span></h1>
-      <p class="hero-sub">Download from YouTube and TikTok. Paste a link. Pick your quality. That's it.</p>
+      <p class="hero-sub">Download videos from YouTube, Instagram &amp; TikTok in seconds.</p>
 
       <div class="hero-input-group">
         <div class="url-field">
-          <input type="text" id="urlInput" placeholder="Paste a link..." autofocus>
-          <button class="paste-btn" onclick="pasteFromClipboard()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            Paste
-          </button>
+          <svg class="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
+          <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." autofocus>
+          <button class="paste-btn" onclick="pasteFromClipboard()">Paste</button>
         </div>
 
         <button class="download-btn" id="fetchBtn" onclick="fetchInfo()">
-          Get video
-          <span class="btn-arrow">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
+          Download Video
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
 
-      <div class="hero-platforms">
-        <span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 00.5 6.2 31.3 31.3 0 000 12a31.3 31.3 0 00.5 5.8 3 3 0 002.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 002.1-2.1A31.3 31.3 0 0024 12a31.3 31.3 0 00-.5-5.8zM9.6 15.6V8.4L15.8 12 9.6 15.6z"/></svg>
-          YouTube
-        </span>
-        <span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 2c.5 0 1 .4 1 1v6.5l4-3.5c.4-.3 1-.1 1.1.4v11.2c-.1.5-.7.7-1.1.4l-4-3.5V21c0 .6-.5 1-1 1h-1c-.5 0-1-.4-1-1V3c0-.6.5-1 1-1h1z"/></svg>
-          TikTok
-        </span>
+      <div class="hero-checks">
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> No signup</span>
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> Private</span>
+        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5"><path d="M20 6L9 17l-5-5"/></svg></span> Free</span>
       </div>
     </div>
 
-    <!-- BROWSER PREVIEW (becomes interactive after fetch) -->
+    <!-- BROWSER PREVIEW -->
     <div class="hero-right">
       <div class="browser" id="browserPreview">
         <div class="browser-bar">
           <div class="browser-dot"></div>
           <div class="browser-dot"></div>
           <div class="browser-dot"></div>
-          <div class="browser-url">localhost:3456</div>
+          <div class="browser-url">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            youtube.com/watch?v=dQw4w9WgXcQ
+          </div>
         </div>
         <div class="browser-body">
           <!-- PLACEHOLDER STATE -->
           <div id="browserPlaceholder">
-            <div class="mock-thumb">
+            <div class="mock-thumb" style="background:linear-gradient(135deg,#f0c27f 0%,#fc5c7d 50%,#6a82fb 100%)">
               <div class="mock-play">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg>
               </div>
               <span class="mock-duration">4:32</span>
             </div>
-            <div class="mock-title">Summer Vibes Playlist 2026</div>
-            <div class="mock-channel">@musicchannel &middot; 2.4M views</div>
+            <div class="mock-meta">
+              <div class="mock-avatar"></div>
+              <div class="mock-meta-text">
+                <div class="mock-title">Summer Vibes Playlist 2026</div>
+                <div class="mock-channel">@musicchannel &middot; 2.4M views</div>
+              </div>
+            </div>
             <div class="mock-label">Quality</div>
             <div class="mock-formats">
               <div class="mock-format active">
@@ -886,23 +920,34 @@
                 <span class="mf-right">6.8 MB</span>
               </div>
             </div>
-            <div class="mock-dl-btn" style="opacity:0.4;cursor:default">Paste a link to get started</div>
+            <div class="mock-dl-btn" style="opacity:0.4;cursor:default">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Download Now
+            </div>
           </div>
 
-          <!-- LIVE STATE (hidden until fetch) -->
+          <!-- LIVE STATE -->
           <div id="browserLive" style="display:none">
-            <div class="mock-thumb" id="liveThumbWrap" style="overflow:hidden">
+            <div class="mock-thumb" id="liveThumbWrap">
               <img id="liveThumb" src="" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;display:none">
               <div class="mock-play" id="livePlayIcon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg>
               </div>
               <span class="mock-duration" id="liveDuration"></span>
             </div>
-            <div class="mock-title" id="liveTitle"></div>
-            <div class="mock-channel" id="liveChannel"></div>
+            <div class="mock-meta">
+              <div class="mock-avatar" id="liveAvatar"></div>
+              <div class="mock-meta-text">
+                <div class="mock-title" id="liveTitle"></div>
+                <div class="mock-channel" id="liveChannel"></div>
+              </div>
+            </div>
             <div class="mock-label">Quality</div>
             <div class="mock-formats" id="liveFormats"></div>
-            <button class="mock-dl-btn" id="liveDlBtn" onclick="startDownload()" style="cursor:pointer;border:none;font-family:inherit">Download</button>
+            <button class="mock-dl-btn" id="liveDlBtn" onclick="startDownload()" style="cursor:pointer;border:none;font-family:inherit">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Download Now
+            </button>
           </div>
         </div>
       </div>
@@ -928,114 +973,129 @@
   <!-- SUCCESS -->
   <div class="success-msg" id="successMsg">
     <div class="success-inner">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
       Download complete
     </div>
   </div>
 
-  <!-- DOWNLOADS -->
-  <div class="downloads-section" id="downloadsSection">
-    <div class="downloads-wrap">
-      <div class="downloads-header">
-        <h3>Downloads</h3>
-        <button class="open-folder-btn" onclick="openDownloads()">Open folder</button>
-      </div>
-      <div class="downloads-list" id="downloadsList"></div>
-    </div>
-  </div>
-
-  <!-- FEATURES STRIP -->
-  <section class="features-strip" id="features">
-    <div class="features-row">
-      <div class="feature-item">
-        <div class="fi-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         </div>
-        Fast
-      </div>
-      <div class="feature-item">
-        <div class="fi-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><rect x="3" y="6" width="18" height="12" rx="2"/><text x="12" y="15" text-anchor="middle" font-size="7" font-weight="bold" fill="#111" stroke="none">HD</text></svg>
+        <div class="feature-text">
+          <h4>Fast Downloads</h4>
+          <p>Seconds, not minutes.</p>
         </div>
-        HD Quality
       </div>
-      <div class="feature-item">
-        <div class="fi-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
-        Private
+        <div class="feature-text">
+          <h4>Private</h4>
+          <p>We never store your files.</p>
+        </div>
       </div>
-      <div class="feature-item">
-        <div class="fi-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" fill="#111" stroke="none">4K</text></svg>
         </div>
-        No Signup
+        <div class="feature-text">
+          <h4>HD Quality</h4>
+          <p>Original resolution.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M18.178 8c5.096 0 5.096 8 0 8"/><path d="M5.822 8c-5.096 0-5.096 8 0 8"/><path d="M18.178 8H5.822"/><path d="M18.178 16H5.822"/></svg>
+        </div>
+        <div class="feature-text">
+          <h4>Unlimited</h4>
+          <p>No signup required.</p>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- DOWNLOADS -->
+  <div class="downloads-section" id="downloadsSection">
+    <div class="downloads-header">
+      <h3>Recent Downloads</h3>
+      <button class="open-folder-btn" onclick="openDownloads()">
+        Open folder
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      </button>
+    </div>
+    <div class="downloads-list" id="downloadsList"></div>
+  </div>
+
   <!-- HOW IT WORKS -->
   <section class="how-section" id="how">
     <div class="how-header">
+      <span class="how-line"></span>
       <h2>How it works</h2>
+      <span class="how-line"></span>
     </div>
     <p class="how-subtitle">Three simple steps to download any video.</p>
 
     <div class="how-steps">
       <div class="how-step">
-        <div class="step-number">01</div>
-        <div class="step-icon-wrap">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
+        <div class="step-top">
+          <div class="step-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
+          </div>
+          <div class="step-number-badge">1</div>
+          <h3 style="font-size:14px;font-weight:700">Paste your link</h3>
         </div>
         <div class="step-content">
-          <h3>Paste your link</h3>
           <p>Copy any YouTube or TikTok URL and paste it in.</p>
         </div>
       </div>
 
+      <div class="step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+
       <div class="how-step">
-        <div class="step-number">02</div>
-        <div class="step-icon-wrap">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+        <div class="step-top">
+          <div class="step-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><polygon points="10,7 16,10 10,13" fill="#111" stroke="none"/></svg>
+          </div>
+          <div class="step-number-badge">2</div>
+          <h3 style="font-size:14px;font-weight:700">Choose quality</h3>
         </div>
         <div class="step-content">
-          <h3>Choose quality</h3>
           <p>Select 4K, 1080p, 720p or MP3.</p>
         </div>
       </div>
 
+      <div class="step-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+
       <div class="how-step">
-        <div class="step-number">03</div>
-        <div class="step-icon-wrap">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <div class="step-top">
+          <div class="step-icon-circle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          </div>
+          <div class="step-number-badge">3</div>
+          <h3 style="font-size:14px;font-weight:700">Download</h3>
         </div>
         <div class="step-content">
-          <h3>Download</h3>
-          <p>Your download starts instantly. No signup required.</p>
+          <p>Your video starts instantly. No signup required.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <div class="cta-block">
-      <h3>Ready to download<span class="accent-dot">?</span></h3>
-      <a href="#" class="cta-go-btn" onclick="scrollToTop(); return false;">
-        Try it now
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </a>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
     <div class="footer-inner">
-      <span class="footer-left">&copy; 2026 vidsave</span>
-      <span class="footer-right">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-        Respect creators. Download responsibly.
-      </span>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      Made for creators, learners and anyone who loves great content.
     </div>
   </footer>
 
@@ -1043,6 +1103,7 @@
   <script>
     let selectedFormat = null;
     let audioOnly = false;
+    let tikwmData = null;
     const urlInput = document.getElementById('urlInput');
 
     urlInput.addEventListener('keydown', (e) => {
@@ -1071,7 +1132,7 @@
     function formatDuration(sec) {
       if (!sec) return '';
       const m = Math.floor(sec / 60);
-      const s = sec % 60;
+      const s = Math.floor(sec % 60);
       return m + ':' + String(s).padStart(2, '0');
     }
 
@@ -1091,6 +1152,15 @@
       return h + 'p';
     }
 
+    function timeAgo(dateStr) {
+      const d = new Date(dateStr);
+      const now = new Date();
+      const diff = Math.floor((now - d) / 86400000);
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Yesterday';
+      return diff + 'd ago';
+    }
+
     async function fetchInfo() {
       const url = urlInput.value.trim();
       if (!url) return;
@@ -1100,6 +1170,7 @@
       document.getElementById('successMsg').classList.remove('visible');
       selectedFormat = null;
       audioOnly = false;
+      tikwmData = null;
 
       try {
         const res = await fetch('/api/info', {
@@ -1109,8 +1180,8 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
+        if (data._tikwm) tikwmData = data._tikwm;
 
-        // Update browser preview with real data
         const thumbImg = document.getElementById('liveThumb');
         if (data.thumbnail) {
           thumbImg.src = data.thumbnail;
@@ -1121,7 +1192,6 @@
         document.getElementById('liveTitle').textContent = data.title;
         document.getElementById('liveChannel').textContent = data.uploader;
 
-        // Build format options
         const fmts = document.getElementById('liveFormats');
         fmts.innerHTML = '';
 
@@ -1154,18 +1224,15 @@
           fmts.appendChild(mp3);
         }
 
-        // Switch from placeholder to live
         document.getElementById('browserPlaceholder').style.display = 'none';
         document.getElementById('browserLive').style.display = 'block';
-
-        // Add highlight to browser
         document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1)';
 
       } catch (e) {
         showError(e.message || 'Failed to fetch video info');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Get video <span class="btn-arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>';
+        btn.innerHTML = 'Download Video <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
       }
     }
 
@@ -1186,7 +1253,7 @@
         const res = await fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, formatId: selectedFormat, audioOnly }),
+          body: JSON.stringify({ url, formatId: selectedFormat, audioOnly, _tikwm: tikwmData }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -1194,7 +1261,7 @@
       } catch (e) {
         showError(e.message || 'Download failed');
         btn.disabled = false;
-        btn.textContent = 'Download';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
         ps.classList.remove('visible');
       }
     }
@@ -1213,7 +1280,7 @@
             document.getElementById('successMsg').classList.add('visible');
             const btn = document.getElementById('liveDlBtn');
             btn.disabled = false;
-            btn.textContent = 'Download';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
             loadDownloads();
           } else if (d.status === 'error') {
             clearInterval(iv);
@@ -1221,7 +1288,7 @@
             showError(d.error || 'Download failed');
             const btn = document.getElementById('liveDlBtn');
             btn.disabled = false;
-            btn.textContent = 'Download';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
           }
         } catch { clearInterval(iv); }
       }, 500);
@@ -1235,10 +1302,14 @@
         list.innerHTML = '';
         if (files.length === 0) { document.getElementById('downloadsSection').style.display = 'none'; return; }
         document.getElementById('downloadsSection').style.display = 'block';
-        files.forEach(f => {
+        files.slice(0, 8).forEach(f => {
+          const ext = f.name.split('.').pop().toUpperCase();
           const d = document.createElement('div');
           d.className = 'download-item';
-          d.innerHTML = '<span class="download-name" title="' + f.name + '">' + f.name + '</span><span class="download-size">' + formatBytes(f.size) + '</span>';
+          d.innerHTML = '<div class="dl-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>'
+            + '<div class="dl-info"><div class="dl-name" title="' + f.name.replace(/"/g, '&quot;') + '">' + f.name + '</div>'
+            + '<div class="dl-meta">' + ext + ' &middot; ' + formatBytes(f.size) + '</div></div>'
+            + '<span class="dl-date">' + timeAgo(f.date) + '</span>';
           list.appendChild(d);
         });
       } catch {}
