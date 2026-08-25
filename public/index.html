@@ -272,7 +272,7 @@
     }
 
     /* ─── BROWSER MOCKUP ─── */
-    .hero-right { padding-top: 0; }
+    .hero-right { padding-top: 0; min-width: 0; }
 
     .browser {
       background: var(--card);
@@ -386,7 +386,7 @@
     .mock-formats {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 10px;
       margin-bottom: 16px;
     }
 
@@ -399,11 +399,10 @@
       border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
-      border: 2px solid transparent;
     }
 
     .mock-format.active {
-      border-color: var(--black);
+      box-shadow: inset 0 0 0 2px var(--black);
       background: #fff;
     }
 
@@ -449,6 +448,43 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
+    }
+
+    /* ─── CAROUSEL ─── */
+    .carousel-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0 12px;
+      margin-bottom: 8px;
+    }
+    .carousel-strip::-webkit-scrollbar { height: 4px; }
+    .carousel-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .carousel-thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+      position: relative;
+      background: var(--border);
+      transition: border-color 0.15s;
+    }
+    .carousel-thumb.selected { border-color: var(--accent); }
+    .carousel-thumb:hover { border-color: var(--gray); }
+    .carousel-thumb.selected:hover { border-color: var(--accent); }
+    .carousel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: rgba(0,0,0,0.6);
+      border-radius: 3px;
+      padding: 2px 4px;
+      display: flex;
+      align-items: center;
     }
 
     /* ─── FEATURES ─── */
@@ -582,12 +618,85 @@
       flex-shrink: 0;
     }
 
+    .shrink-btn {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--black);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .shrink-btn:hover { border-color: #ccc; background: #eee; }
+    .shrink-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .shrink-progress {
+      margin-top: 8px;
+      padding: 12px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .shrink-progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .shrink-progress-label {
+      font-size: 12px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+
+    .shrink-progress-pct {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .shrink-bar-track {
+      height: 5px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .shrink-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .shrink-result {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--gray);
+    }
+
+    .shrink-result strong {
+      color: #1a7a1a;
+      font-weight: 700;
+    }
+
     /* ─── PROGRESS ─── */
     .progress-section {
       display: none;
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 0 60px 20px;
+      padding: 16px 0 0;
     }
 
     .progress-section.visible { display: block; }
@@ -636,9 +745,7 @@
     /* ─── SUCCESS ─── */
     .success-msg {
       display: none;
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 0 60px 16px;
+      padding: 16px 0 0;
     }
 
     .success-msg.visible { display: block; }
@@ -655,6 +762,7 @@
       font-weight: 600;
       color: #1a7a1a;
     }
+
 
     /* ─── ERROR ─── */
     .error-msg {
@@ -869,7 +977,7 @@
         </div>
 
         <button class="download-btn" id="fetchBtn" onclick="fetchInfo()">
-          Download Video
+          Download
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
       </div>
@@ -926,12 +1034,12 @@
             </div>
             <div class="mock-dl-btn" style="opacity:0.4;cursor:default">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Download Now
+              Download
             </div>
           </div>
 
           <!-- LIVE STATE -->
-          <div id="browserLive" style="display:none">
+          <div id="browserLive" style="display:none;position:relative">
             <div class="mock-thumb" id="liveThumbWrap">
               <img id="liveThumb" src="" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;display:none">
               <div class="mock-play" id="livePlayIcon">
@@ -946,13 +1054,39 @@
                 <div class="mock-channel" id="liveChannel"></div>
               </div>
             </div>
-            <div class="mock-label">Quality</div>
+            <div id="carouselStrip" class="carousel-strip" style="display:none"></div>
+            <div class="mock-label" id="qualityLabel">Quality</div>
             <div class="mock-formats" id="liveFormats"></div>
             <button class="mock-dl-btn" id="liveDlBtn" onclick="startDownload()" style="cursor:pointer;border:none;font-family:inherit">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Download Now
+              Download
+            </button>
+            <button onclick="resetForNew()" style="width:100%;margin-top:8px;padding:10px;background:none;border:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:color 0.15s" onmouseover="this.style.color='var(--black)'" onmouseout="this.style.color='var(--gray)'">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              Reset
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-section" id="progressSection">
+        <div class="progress-card">
+          <div class="progress-top">
+            <span class="progress-label" id="progressLabel">Downloading...</span>
+            <span class="progress-pct" id="progressPct">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="success-msg" id="successMsg">
+        <div class="success-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+          Download complete
         </div>
       </div>
     </div>
@@ -960,27 +1094,6 @@
 
   <!-- ERROR -->
   <div class="error-msg" id="errorMsg"><div class="error-inner" id="errorText"></div></div>
-
-  <!-- PROGRESS -->
-  <div class="progress-section" id="progressSection">
-    <div class="progress-card">
-      <div class="progress-top">
-        <span class="progress-label" id="progressLabel">Downloading...</span>
-        <span class="progress-pct" id="progressPct">0%</span>
-      </div>
-      <div class="progress-bar-track">
-        <div class="progress-bar-fill" id="progressBar"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SUCCESS -->
-  <div class="success-msg" id="successMsg">
-    <div class="success-inner">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-      Download complete
-    </div>
-  </div>
 
   <!-- FEATURES -->
   <section class="features-section" id="features">
@@ -1114,6 +1227,9 @@
     let selectedFormat = null;
     let audioOnly = false;
     let tikwmData = null;
+    let carouselData = null;
+    let selectedItemIndex = 0;
+    let igMediaData = null;
     const urlInput = document.getElementById('urlInput');
 
     urlInput.addEventListener('keydown', (e) => {
@@ -1183,6 +1299,7 @@
       selectedFormat = null;
       audioOnly = false;
       tikwmData = null;
+      igMediaData = null;
 
       try {
         const res = await fetch('/api/info', {
@@ -1193,6 +1310,16 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         if (data._tikwm) tikwmData = data._tikwm;
+        if (data.downloadUrl) igMediaData = { downloadUrl: data.downloadUrl, isImage: data.isImage !== false };
+
+        if (data.isCarousel) {
+          carouselData = data;
+          showCarousel(data);
+          return;
+        }
+        carouselData = null;
+        document.getElementById('carouselStrip').style.display = 'none';
+        document.getElementById('qualityLabel').style.display = '';
 
         const thumbImg = document.getElementById('liveThumb');
         if (data.thumbnail) {
@@ -1217,9 +1344,13 @@
             div.classList.add('active');
             selectedFormat = f.format_id;
             audioOnly = false;
+            if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false };
           };
           fmts.appendChild(div);
-          if (i === 0) { selectedFormat = f.format_id; audioOnly = false; }
+          if (i === 0) {
+            selectedFormat = f.format_id; audioOnly = false;
+            if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false };
+          }
         });
 
         if (data.audioFormats.length > 0) {
@@ -1244,7 +1375,81 @@
         showError(e.message || 'Failed to fetch video info');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Download Video <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        btn.innerHTML = 'Download <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+      }
+    }
+
+    function showCarousel(data) {
+      document.getElementById('liveTitle').textContent = data.title;
+      document.getElementById('liveChannel').textContent = data.uploader;
+
+      const strip = document.getElementById('carouselStrip');
+      strip.innerHTML = '';
+      data.items.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'carousel-thumb' + (i === 0 ? ' selected' : '');
+        if (item.thumbnail) {
+          div.innerHTML = '<img src="' + item.thumbnail + '" alt="">';
+        }
+        if (item.isVideo) {
+          div.innerHTML += '<span class="carousel-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg></span>';
+        }
+        div.onclick = () => selectCarouselItem(i);
+        strip.appendChild(div);
+      });
+      strip.style.display = 'flex';
+
+      selectCarouselItem(0);
+
+      document.getElementById('browserPlaceholder').style.display = 'none';
+      document.getElementById('browserLive').style.display = 'block';
+      document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1)';
+    }
+
+    function selectCarouselItem(index) {
+      selectedItemIndex = index;
+      const item = carouselData.items[index];
+
+      document.getElementById('carouselStrip').querySelectorAll('.carousel-thumb').forEach((el, i) => {
+        el.classList.toggle('selected', i === index);
+      });
+
+      const thumbImg = document.getElementById('liveThumb');
+      if (item.thumbnail) {
+        thumbImg.src = item.thumbnail;
+        thumbImg.style.display = 'block';
+      }
+      document.getElementById('livePlayIcon').style.display = item.isVideo ? '' : 'none';
+      document.getElementById('liveDuration').textContent = item.isVideo ? formatDuration(item.duration) : '';
+
+      const fmts = document.getElementById('liveFormats');
+      const qlabel = document.getElementById('qualityLabel');
+      fmts.innerHTML = '';
+      selectedFormat = null;
+      audioOnly = false;
+
+      if (item.isVideo && item.videoFormats.length > 0) {
+        qlabel.style.display = '';
+        item.videoFormats.forEach((f, i) => {
+          const div = document.createElement('div');
+          div.className = 'mock-format' + (i === 0 ? ' active' : '');
+          div.innerHTML = '<div><span class="mf-dot"></span>' + qualityLabel(f.height) + ' ' + f.ext.toUpperCase() + '</div><span class="mf-right">' + formatBytes(f.filesize) + '</span>';
+          div.style.cursor = 'pointer';
+          div.onclick = () => {
+            fmts.querySelectorAll('.mock-format').forEach(el => el.classList.remove('active'));
+            div.classList.add('active');
+            selectedFormat = f.format_id;
+            audioOnly = false;
+            if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl;
+          };
+          fmts.appendChild(div);
+          if (i === 0) {
+            selectedFormat = f.format_id;
+            if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl;
+          }
+        });
+      } else {
+        qlabel.style.display = 'none';
       }
     }
 
@@ -1265,7 +1470,11 @@
         const res = await fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, formatId: selectedFormat, audioOnly, _tikwm: tikwmData }),
+          body: JSON.stringify(Object.assign(
+            { url, formatId: selectedFormat, audioOnly, _tikwm: tikwmData, title: document.getElementById('liveTitle').textContent || '' },
+            carouselData ? { playlistItem: carouselData.items[selectedItemIndex].index, isImage: !carouselData.items[selectedItemIndex].isVideo, instagramUrl: carouselData.items[selectedItemIndex].downloadUrl } : {},
+            igMediaData ? { instagramUrl: igMediaData.downloadUrl, isImage: igMediaData.isImage } : {}
+          )),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -1273,7 +1482,7 @@
       } catch (e) {
         showError(e.message || 'Download failed');
         btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
         ps.classList.remove('visible');
       }
     }
@@ -1292,7 +1501,7 @@
             document.getElementById('successMsg').classList.add('visible');
             const btn = document.getElementById('liveDlBtn');
             btn.disabled = false;
-            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
             loadDownloads();
           } else if (d.status === 'error') {
             clearInterval(iv);
@@ -1300,10 +1509,16 @@
             showError(d.error || 'Download failed');
             const btn = document.getElementById('liveDlBtn');
             btn.disabled = false;
-            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download Now';
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
           }
         } catch { clearInterval(iv); }
       }, 500);
+    }
+
+    function escapeHtml(str) {
+      const el = document.createElement('span');
+      el.textContent = str;
+      return el.innerHTML;
     }
 
     async function loadDownloads() {
@@ -1314,13 +1529,18 @@
         list.innerHTML = '';
         if (files.length === 0) { document.getElementById('downloadsSection').style.display = 'none'; return; }
         document.getElementById('downloadsSection').style.display = 'block';
+        const videoExts = new Set(['MP4', 'WEBM', 'MKV', 'MOV', 'AVI']);
         files.slice(0, 8).forEach(f => {
           const ext = f.name.split('.').pop().toUpperCase();
+          const safe = escapeHtml(f.name);
+          const isVideo = videoExts.has(ext);
+          const isShrunk = f.name.includes('_shrunk.');
           const d = document.createElement('div');
           d.className = 'download-item';
           d.innerHTML = '<div class="dl-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>'
-            + '<div class="dl-info"><div class="dl-name" title="' + f.name.replace(/"/g, '&quot;') + '">' + f.name + '</div>'
+            + '<div class="dl-info"><div class="dl-name" title="' + safe + '">' + safe + '</div>'
             + '<div class="dl-meta">' + ext + ' &middot; ' + formatBytes(f.size) + '</div></div>'
+            + (isVideo && !isShrunk ? '<button class="shrink-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Shrink</button>' : '')
             + '<span class="dl-date">' + timeAgo(f.date) + '</span>';
           list.appendChild(d);
         });
@@ -1330,6 +1550,85 @@
     function clearDownloads() {
       document.getElementById('downloadsList').innerHTML = '';
       document.getElementById('downloadsSection').style.display = 'none';
+    }
+
+    function resetForNew() {
+      urlInput.value = '';
+      document.getElementById('clearInput').style.display = 'none';
+      selectedFormat = null;
+      audioOnly = false;
+      tikwmData = null;
+      carouselData = null;
+      selectedItemIndex = 0;
+      igMediaData = null;
+      document.getElementById('carouselStrip').style.display = 'none';
+      document.getElementById('carouselStrip').innerHTML = '';
+      document.getElementById('qualityLabel').style.display = '';
+      document.getElementById('browserPlaceholder').style.display = 'block';
+      document.getElementById('browserLive').style.display = 'none';
+      document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.06)';
+      document.getElementById('successMsg').classList.remove('visible');
+      document.getElementById('progressSection').classList.remove('visible');
+      document.getElementById('errorMsg').classList.remove('visible');
+      const thumbImg = document.getElementById('liveThumb');
+      thumbImg.src = '';
+      thumbImg.style.display = 'none';
+      document.getElementById('livePlayIcon').style.display = '';
+      urlInput.focus();
+    }
+
+    async function shrinkFile(filename, btn) {
+      btn.disabled = true;
+      btn.textContent = 'Starting...';
+      const item = btn.closest('.download-item');
+      try {
+        const res = await fetch('/api/shrink', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const prog = document.createElement('div');
+        prog.className = 'shrink-progress';
+        prog.id = 'shrink-' + data.id;
+        prog.innerHTML = '<div class="shrink-progress-top"><span class="shrink-progress-label">Shrinking...</span><span class="shrink-progress-pct">0%</span></div><div class="shrink-bar-track"><div class="shrink-bar-fill"></div></div><div class="shrink-result"></div>';
+        item.after(prog);
+        btn.style.display = 'none';
+
+        pollShrink(data.id, prog, btn);
+      } catch (e) {
+        showError(e.message || 'Shrink failed');
+        btn.disabled = false;
+        btn.textContent = 'Shrink';
+      }
+    }
+
+    function pollShrink(id, prog, btn) {
+      const iv = setInterval(async () => {
+        try {
+          const res = await fetch('/api/shrink-progress/' + id);
+          const d = await res.json();
+          prog.querySelector('.shrink-bar-fill').style.width = d.progress + '%';
+          prog.querySelector('.shrink-progress-pct').textContent = Math.round(d.progress) + '%';
+          if (d.status === 'complete') {
+            clearInterval(iv);
+            prog.querySelector('.shrink-progress-label').textContent = d.filename;
+            const saved = d.originalSize - d.newSize;
+            const pctSaved = Math.round((saved / d.originalSize) * 100);
+            prog.querySelector('.shrink-result').innerHTML = formatBytes(d.originalSize) + ' &rarr; ' + formatBytes(d.newSize) + ' &mdash; <strong>' + pctSaved + '% smaller</strong>';
+            setTimeout(() => { prog.remove(); loadDownloads(); }, 4000);
+          } else if (d.status === 'error') {
+            clearInterval(iv);
+            showError(d.error || 'Shrink failed');
+            prog.remove();
+            btn.style.display = '';
+            btn.disabled = false;
+            btn.textContent = 'Shrink';
+          }
+        } catch { clearInterval(iv); }
+      }, 500);
     }
 
     async function openDownloads() { await fetch('/api/open-downloads'); }
