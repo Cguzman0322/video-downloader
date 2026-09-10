@@ -5,6 +5,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const https = require('https');
 
+const multer = require('multer');
+
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
@@ -20,6 +22,7 @@ function detectPlatform(url) {
   if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
   if (/instagram\.com/i.test(url)) return 'instagram';
   if (/tiktok\.com/i.test(url)) return 'tiktok';
+  if (/facebook\.com|fb\.watch|fb\.com/i.test(url)) return 'facebook';
   return 'unknown';
 }
 
@@ -275,7 +278,7 @@ app.post('/api/info', async (req, res) => {
 
   const platform = detectPlatform(url);
   if (platform === 'unknown') {
-    return res.status(400).json({ error: 'Unsupported platform. Use YouTube, TikTok, or Instagram URLs.' });
+    return res.status(400).json({ error: 'Unsupported platform. Use YouTube, TikTok, Instagram, or Facebook URLs.' });
   }
   if (UNSUPPORTED_PLATFORMS.has(platform)) {
     return res.status(400).json({ error: 'This platform is not currently supported.' });
@@ -303,7 +306,7 @@ app.post('/api/info', async (req, res) => {
   }
 
   const args = ['--dump-json', '--no-playlist'];
-  if (platform === 'instagram' && fs.existsSync(COOKIES_FILE)) {
+  if ((platform === 'instagram' || platform === 'facebook') && fs.existsSync(COOKIES_FILE)) {
     args.push('--cookies', COOKIES_FILE);
   }
   args.push(url);
@@ -466,7 +469,7 @@ app.post('/api/download', (req, res) => {
   } else {
     args.push('--no-playlist');
   }
-  if (platform === 'instagram' && fs.existsSync(COOKIES_FILE)) {
+  if ((platform === 'instagram' || platform === 'facebook') && fs.existsSync(COOKIES_FILE)) {
     args.push('--cookies', COOKIES_FILE);
   }
 
@@ -607,8 +610,34 @@ app.get('/api/open-downloads', (req, res) => {
   res.json({ ok: true });
 });
 
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: DOWNLOADS_DIR,
+    filename: (req, file, cb) => {
+      const sanitized = file.originalname.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+      cb(null, sanitized || `upload_${Date.now()}.mp4`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 },
+});
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ filename: req.file.filename, size: req.file.size });
+});
+
+function cleanupPassLog(prefix) {
+  try {
+    const dir = path.dirname(prefix);
+    const base = path.basename(prefix);
+    fs.readdirSync(dir).filter(f => f.startsWith(base)).forEach(f => {
+      try { fs.unlinkSync(path.join(dir, f)); } catch {}
+    });
+  } catch {}
+}
+
 app.post('/api/shrink', (req, res) => {
-  const { filename } = req.body;
+  const { filename, targetMB } = req.body;
   if (!filename) return res.status(400).json({ error: 'Filename is required' });
   if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
     return res.status(400).json({ error: 'Invalid filename' });
@@ -618,7 +647,8 @@ app.post('/api/shrink', (req, res) => {
 
   const ext = path.extname(filename);
   const base = path.basename(filename, ext);
-  const outputFilename = base + '_shrunk' + ext;
+  const suffix = targetMB ? `_${targetMB}mb` : '_shrunk';
+  const outputFilename = base + suffix + ext;
   const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
   const id = crypto.randomBytes(8).toString('hex');
   const originalSize = fs.statSync(inputPath).size;
@@ -632,35 +662,99 @@ app.post('/api/shrink', (req, res) => {
     activeShrinks.set(id, { progress: 0, status: 'shrinking', filename: outputFilename, originalSize, newSize: null, error: null });
     res.json({ id, originalSize });
 
-    const args = ['-i', inputPath, '-c:v', 'libx264', '-crf', '28', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-y', '-progress', 'pipe:1', outputPath];
-    const proc = spawn('ffmpeg', args);
+    if (targetMB && totalDuration > 0) {
+      const targetBytes = targetMB * 0.95 * 1024 * 1024;
+      const audioBitrate = 128000;
+      const videoBitrate = Math.max(100000, Math.floor((targetBytes * 8 / totalDuration) - audioBitrate));
+      const passLogPrefix = path.join(DOWNLOADS_DIR, `.ffmpeg2pass-${id}`);
 
-    proc.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n');
-      for (const line of lines) {
-        const m = line.match(/out_time_us=(\d+)/);
-        if (m && totalDuration > 0) {
-          const shrink = activeShrinks.get(id);
-          if (shrink) shrink.progress = Math.min(99, Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 100));
+      const pass1Args = ['-y', '-i', inputPath, '-c:v', 'libx264', '-b:v', String(videoBitrate),
+        '-preset', 'medium', '-pix_fmt', 'yuv420p', '-pass', '1', '-passlogfile', passLogPrefix,
+        '-an', '-f', 'null', '-progress', 'pipe:1', '/dev/null'];
+      const pass1 = spawn('ffmpeg', pass1Args);
+
+      pass1.stdout.on('data', (data) => {
+        for (const line of data.toString().split('\n')) {
+          const m = line.match(/out_time_us=(\d+)/);
+          if (m && totalDuration > 0) {
+            const shrink = activeShrinks.get(id);
+            if (shrink) shrink.progress = Math.min(49, Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 50));
+          }
         }
-      }
-    });
+      });
+      pass1.stderr.on('data', () => {});
 
-    proc.stderr.on('data', () => {});
+      pass1.on('close', (code) => {
+        if (code !== 0) {
+          const shrink = activeShrinks.get(id);
+          if (shrink) { shrink.status = 'error'; shrink.error = 'Compression failed (pass 1)'; }
+          cleanupPassLog(passLogPrefix);
+          return;
+        }
 
-    proc.on('close', (code) => {
-      const shrink = activeShrinks.get(id);
-      if (!shrink) return;
-      if (code === 0 && fs.existsSync(outputPath)) {
-        shrink.newSize = fs.statSync(outputPath).size;
-        shrink.progress = 100;
-        shrink.status = 'complete';
-      } else {
-        shrink.status = 'error';
-        shrink.error = 'Compression failed';
-        try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
-      }
-    });
+        const pass2Args = ['-y', '-i', inputPath, '-c:v', 'libx264', '-b:v', String(videoBitrate),
+          '-preset', 'medium', '-pix_fmt', 'yuv420p', '-pass', '2', '-passlogfile', passLogPrefix,
+          '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
+          '-progress', 'pipe:1', outputPath];
+        const pass2 = spawn('ffmpeg', pass2Args);
+
+        pass2.stdout.on('data', (data) => {
+          for (const line of data.toString().split('\n')) {
+            const m = line.match(/out_time_us=(\d+)/);
+            if (m && totalDuration > 0) {
+              const shrink = activeShrinks.get(id);
+              if (shrink) shrink.progress = Math.min(99, 50 + Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 50));
+            }
+          }
+        });
+        pass2.stderr.on('data', () => {});
+
+        pass2.on('close', (code2) => {
+          cleanupPassLog(passLogPrefix);
+          const shrink = activeShrinks.get(id);
+          if (!shrink) return;
+          if (code2 === 0 && fs.existsSync(outputPath)) {
+            shrink.newSize = fs.statSync(outputPath).size;
+            shrink.progress = 100;
+            shrink.status = 'complete';
+          } else {
+            shrink.status = 'error';
+            shrink.error = 'Compression failed';
+            try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+          }
+        });
+      });
+    } else {
+      const args = ['-i', inputPath, '-c:v', 'libx264', '-crf', '28', '-preset', 'medium',
+        '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart',
+        '-y', '-progress', 'pipe:1', outputPath];
+      const proc = spawn('ffmpeg', args);
+
+      proc.stdout.on('data', (data) => {
+        for (const line of data.toString().split('\n')) {
+          const m = line.match(/out_time_us=(\d+)/);
+          if (m && totalDuration > 0) {
+            const shrink = activeShrinks.get(id);
+            if (shrink) shrink.progress = Math.min(99, Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 100));
+          }
+        }
+      });
+      proc.stderr.on('data', () => {});
+
+      proc.on('close', (code) => {
+        const shrink = activeShrinks.get(id);
+        if (!shrink) return;
+        if (code === 0 && fs.existsSync(outputPath)) {
+          shrink.newSize = fs.statSync(outputPath).size;
+          shrink.progress = 100;
+          shrink.status = 'complete';
+        } else {
+          shrink.status = 'error';
+          shrink.error = 'Compression failed';
+          try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+        }
+      });
+    }
   });
 });
 
@@ -671,6 +765,51 @@ app.get('/api/shrink-progress/:id', (req, res) => {
   if (shrink.status === 'complete' || shrink.status === 'error') {
     setTimeout(() => activeShrinks.delete(req.params.id), DOWNLOAD_TTL_MS);
   }
+});
+
+const imageUpload = multer({
+  storage: multer.diskStorage({
+    destination: DOWNLOADS_DIR,
+    filename: (req, file, cb) => {
+      const sanitized = file.originalname.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+      cb(null, `_converting_${Date.now()}_${sanitized || 'image'}`);
+    },
+  }),
+  limits: { fileSize: 200 * 1024 * 1024 },
+});
+
+const SUPPORTED_OUTPUT_FORMATS = new Set(['jpeg', 'png', 'tiff', 'gif', 'bmp', 'heic']);
+
+app.post('/api/convert-image', imageUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const targetFormat = (req.body.format || 'jpeg').toLowerCase();
+  if (!SUPPORTED_OUTPUT_FORMATS.has(targetFormat)) {
+    try { fs.unlinkSync(req.file.path); } catch {}
+    return res.status(400).json({ error: 'Unsupported output format' });
+  }
+
+  const inputPath = req.file.path;
+  const originalName = req.body.originalName || req.file.originalname || 'image';
+  const baseName = path.basename(originalName, path.extname(originalName))
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim() || 'image';
+  const ext = targetFormat === 'jpeg' ? 'jpg' : targetFormat;
+  const outputFilename = `${baseName}.${ext}`;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+
+  execFile('sips', ['-s', 'format', targetFormat, inputPath, '--out', outputPath], (err, stdout, stderr) => {
+    try { fs.unlinkSync(inputPath); } catch {}
+
+    if (err) {
+      console.error('sips error:', stderr || err.message);
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+      return res.status(500).json({ error: 'Conversion failed. Make sure the input is a valid image.' });
+    }
+
+    const inputSize = req.file.size;
+    const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
+    res.json({ filename: outputFilename, inputSize, outputSize });
+  });
 });
 
 const PORT = 3456;

@@ -487,6 +487,152 @@
       align-items: center;
     }
 
+    /* ─── COMPRESS UPLOAD ─── */
+    .compress-section {
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 40px 60px 0;
+    }
+
+    .compress-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .compress-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .compress-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--accent);
+      color: var(--black);
+      padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: var(--card);
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #FAFFF0;
+    }
+
+    .drop-zone-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: inline-grid;
+      place-items: center;
+      margin-bottom: 12px;
+    }
+
+    .drop-zone h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .drop-zone p {
+      font-size: 13px;
+      color: var(--gray);
+    }
+
+    .compress-progress {
+      display: none;
+      margin-top: 14px;
+      padding: 18px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .compress-progress.visible { display: block; }
+
+    .compress-progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .compress-progress-label {
+      font-size: 13px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+
+    .compress-progress-pct {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .compress-bar-track {
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .compress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .compress-result {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--gray);
+    }
+
+    .compress-result strong {
+      color: #1a7a1a;
+      font-weight: 700;
+    }
+
+    /* ─── FORMAT CHIPS ─── */
+    .format-chip {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .format-chip:hover { border-color: #ccc; color: var(--black); }
+
+    .format-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--black);
+      font-weight: 700;
+    }
+
     /* ─── FEATURES ─── */
     .features-section {
       max-width: 1340px;
@@ -637,6 +783,13 @@
 
     .shrink-btn:hover { border-color: #ccc; background: #eee; }
     .shrink-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .meta-btn {
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .meta-btn:hover { background: #b8d617; border-color: #b8d617; }
 
     .shrink-progress {
       margin-top: 8px;
@@ -923,6 +1076,7 @@
       .how-steps { flex-direction: column; align-items: center; }
       .step-arrow { display: none; }
       .how-step { max-width: 100%; }
+      .compress-section { padding: 32px 28px 0; }
       .downloads-section { padding: 32px 28px 0; }
       .progress-section,
       .success-msg,
@@ -965,7 +1119,7 @@
       </div>
 
       <h1><span class="line1">Save</span><span class="line2">Videos<span class="accent-dot"></span></span></h1>
-      <p class="hero-sub">Download videos from YouTube, Instagram &amp; TikTok in seconds.</p>
+      <p class="hero-sub">Download videos from YouTube, Instagram, TikTok &amp; Facebook in seconds.</p>
 
       <div class="hero-input-group">
         <div class="url-field">
@@ -1095,6 +1249,69 @@
   <!-- ERROR -->
   <div class="error-msg" id="errorMsg"><div class="error-inner" id="errorText"></div></div>
 
+  <!-- COMPRESS FOR META -->
+  <section class="compress-section" id="compressSection">
+    <div class="compress-header">
+      <h3>Compress for Meta</h3>
+      <span class="compress-badge">30MB</span>
+    </div>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileUpload').click()">
+      <div class="drop-zone-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <h4>Drop a video file here</h4>
+      <p>or click to browse &middot; MP4, MOV, WEBM, MKV</p>
+    </div>
+    <input type="file" id="fileUpload" accept="video/*" style="display:none">
+    <div class="compress-progress" id="compressProgress">
+      <div class="compress-progress-top">
+        <span class="compress-progress-label" id="compressLabel">Uploading...</span>
+        <span class="compress-progress-pct" id="compressPct">0%</span>
+      </div>
+      <div class="compress-bar-track">
+        <div class="compress-bar-fill" id="compressBar"></div>
+      </div>
+      <div class="compress-result" id="compressResult"></div>
+    </div>
+  </section>
+
+  <!-- IMAGE CONVERTER -->
+  <section class="compress-section" id="convertSection">
+    <div class="compress-header">
+      <h3>Image Converter</h3>
+      <span class="compress-badge">HEIC, PNG, WEBP &rarr;</span>
+    </div>
+    <div class="convert-controls" style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+      <span style="font-size:13px;font-weight:600;color:var(--gray)">Convert to:</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="formatPicker">
+        <button class="format-chip active" data-fmt="jpeg" onclick="pickFormat(this)">JPEG</button>
+        <button class="format-chip" data-fmt="png" onclick="pickFormat(this)">PNG</button>
+        <button class="format-chip" data-fmt="heic" onclick="pickFormat(this)">HEIC</button>
+        <button class="format-chip" data-fmt="tiff" onclick="pickFormat(this)">TIFF</button>
+        <button class="format-chip" data-fmt="gif" onclick="pickFormat(this)">GIF</button>
+        <button class="format-chip" data-fmt="bmp" onclick="pickFormat(this)">BMP</button>
+      </div>
+    </div>
+    <div class="drop-zone" id="imgDropZone" onclick="document.getElementById('imgUpload').click()">
+      <div class="drop-zone-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </div>
+      <h4>Drop an image here</h4>
+      <p>or click to browse &middot; HEIC, PNG, JPG, WEBP, TIFF, BMP, GIF</p>
+    </div>
+    <input type="file" id="imgUpload" accept="image/*,.heic,.heif" style="display:none">
+    <div class="compress-progress" id="convertProgress">
+      <div class="compress-progress-top">
+        <span class="compress-progress-label" id="convertLabel">Converting...</span>
+        <span class="compress-progress-pct" id="convertPct"></span>
+      </div>
+      <div class="compress-bar-track">
+        <div class="compress-bar-fill" id="convertBar" style="width:0%"></div>
+      </div>
+      <div class="compress-result" id="convertResult"></div>
+    </div>
+  </section>
+
   <!-- FEATURES -->
   <section class="features-section" id="features">
     <div class="features-grid">
@@ -1174,7 +1391,7 @@
           <h3 style="font-size:14px;font-weight:700">Paste your link</h3>
         </div>
         <div class="step-content">
-          <p>Copy any YouTube or TikTok URL and paste it in.</p>
+          <p>Copy any YouTube, TikTok, or Facebook URL and paste it in.</p>
         </div>
       </div>
 
@@ -1534,13 +1751,21 @@
           const ext = f.name.split('.').pop().toUpperCase();
           const safe = escapeHtml(f.name);
           const isVideo = videoExts.has(ext);
-          const isShrunk = f.name.includes('_shrunk.');
+          const isCompressed = f.name.includes('_shrunk.') || /_\d+mb\./.test(f.name);
+          const isOver30 = f.size > 30 * 1024 * 1024;
           const d = document.createElement('div');
           d.className = 'download-item';
+          let buttons = '';
+          if (isVideo && !isCompressed) {
+            if (isOver30) {
+              buttons += '<button class="shrink-btn meta-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this, 30)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Meta 30MB</button>';
+            }
+            buttons += '<button class="shrink-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Shrink</button>';
+          }
           d.innerHTML = '<div class="dl-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>'
             + '<div class="dl-info"><div class="dl-name" title="' + safe + '">' + safe + '</div>'
             + '<div class="dl-meta">' + ext + ' &middot; ' + formatBytes(f.size) + '</div></div>'
-            + (isVideo && !isShrunk ? '<button class="shrink-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Shrink</button>' : '')
+            + buttons
             + '<span class="dl-date">' + timeAgo(f.date) + '</span>';
           list.appendChild(d);
         });
@@ -1577,15 +1802,17 @@
       urlInput.focus();
     }
 
-    async function shrinkFile(filename, btn) {
+    async function shrinkFile(filename, btn, targetMB) {
       btn.disabled = true;
       btn.textContent = 'Starting...';
       const item = btn.closest('.download-item');
       try {
+        const body = { filename };
+        if (targetMB) body.targetMB = targetMB;
         const res = await fetch('/api/shrink', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename }),
+          body: JSON.stringify(body),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -1629,6 +1856,170 @@
           }
         } catch { clearInterval(iv); }
       }, 500);
+    }
+
+    // ─── COMPRESS FOR META ───
+    const dropZone = document.getElementById('dropZone');
+    const fileUpload = document.getElementById('fileUpload');
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) uploadAndCompress(file);
+    });
+    fileUpload.addEventListener('change', () => {
+      if (fileUpload.files[0]) uploadAndCompress(fileUpload.files[0]);
+      fileUpload.value = '';
+    });
+
+    async function uploadAndCompress(file) {
+      const prog = document.getElementById('compressProgress');
+      const label = document.getElementById('compressLabel');
+      const pct = document.getElementById('compressPct');
+      const bar = document.getElementById('compressBar');
+      const result = document.getElementById('compressResult');
+
+      prog.classList.add('visible');
+      label.textContent = 'Uploading ' + file.name + '...';
+      pct.textContent = '0%';
+      bar.style.width = '0%';
+      result.innerHTML = '';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadRes = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/upload');
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const p = Math.round((e.loaded / e.total) * 100);
+              pct.textContent = p + '%';
+              bar.style.width = p + '%';
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
+            else reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed'));
+          };
+          xhr.onerror = () => reject(new Error('Upload failed'));
+          xhr.send(formData);
+        });
+
+        label.textContent = 'Compressing to 30MB...';
+        pct.textContent = '0%';
+        bar.style.width = '0%';
+
+        const shrinkRes = await fetch('/api/shrink', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: uploadRes.filename, targetMB: 30 }),
+        });
+        const shrinkData = await shrinkRes.json();
+        if (!shrinkRes.ok) throw new Error(shrinkData.error);
+
+        const iv = setInterval(async () => {
+          try {
+            const res = await fetch('/api/shrink-progress/' + shrinkData.id);
+            const d = await res.json();
+            bar.style.width = d.progress + '%';
+            pct.textContent = Math.round(d.progress) + '%';
+            if (d.filename) label.textContent = 'Compressing ' + d.filename + '...';
+            if (d.status === 'complete') {
+              clearInterval(iv);
+              label.textContent = d.filename;
+              const saved = d.originalSize - d.newSize;
+              const pctSaved = Math.round((saved / d.originalSize) * 100);
+              result.innerHTML = formatBytes(d.originalSize) + ' &rarr; ' + formatBytes(d.newSize) + ' &mdash; <strong>' + pctSaved + '% smaller</strong>';
+              loadDownloads();
+            } else if (d.status === 'error') {
+              clearInterval(iv);
+              showError(d.error || 'Compression failed');
+              prog.classList.remove('visible');
+            }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) {
+        showError(e.message || 'Upload failed');
+        prog.classList.remove('visible');
+      }
+    }
+
+    // ─── IMAGE CONVERTER ───
+    let convertFormat = 'jpeg';
+
+    function pickFormat(btn) {
+      document.querySelectorAll('#formatPicker .format-chip').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      convertFormat = btn.dataset.fmt;
+    }
+
+    const imgDropZone = document.getElementById('imgDropZone');
+    const imgUpload = document.getElementById('imgUpload');
+
+    imgDropZone.addEventListener('dragover', (e) => { e.preventDefault(); imgDropZone.classList.add('drag-over'); });
+    imgDropZone.addEventListener('dragleave', () => imgDropZone.classList.remove('drag-over'));
+    imgDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      imgDropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) convertImage(file);
+    });
+    imgUpload.addEventListener('change', () => {
+      if (imgUpload.files[0]) convertImage(imgUpload.files[0]);
+      imgUpload.value = '';
+    });
+
+    async function convertImage(file) {
+      const prog = document.getElementById('convertProgress');
+      const label = document.getElementById('convertLabel');
+      const pct = document.getElementById('convertPct');
+      const bar = document.getElementById('convertBar');
+      const result = document.getElementById('convertResult');
+
+      prog.classList.add('visible');
+      label.textContent = 'Converting ' + file.name + '...';
+      pct.textContent = '';
+      bar.style.width = '0%';
+      result.innerHTML = '';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('format', convertFormat);
+        formData.append('originalName', file.name);
+
+        const response = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/convert-image');
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const p = Math.round((e.loaded / e.total) * 50);
+              pct.textContent = p + '%';
+              bar.style.width = p + '%';
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
+            else reject(new Error(JSON.parse(xhr.responseText).error || 'Conversion failed'));
+          };
+          xhr.onerror = () => reject(new Error('Upload failed'));
+          xhr.send(formData);
+        });
+
+        bar.style.width = '100%';
+        pct.textContent = '100%';
+        label.textContent = response.filename;
+        result.innerHTML = formatBytes(response.inputSize) + ' &rarr; ' + formatBytes(response.outputSize) + ' &mdash; <strong>' + convertFormat.toUpperCase() + '</strong>';
+        loadDownloads();
+      } catch (e) {
+        showError(e.message || 'Conversion failed');
+        prog.classList.remove('visible');
+      }
     }
 
     async function openDownloads() { await fetch('/api/open-downloads'); }
