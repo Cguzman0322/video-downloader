@@ -2714,6 +2714,7 @@
               result.innerHTML = '<strong>Volume normalized to ' + volumeLUFS + ' LUFS</strong>';
               btn.textContent = 'Done!'; btn.style.background = 'var(--success-surface)'; btn.style.color = 'var(--success)'; btn.style.boxShadow = 'none';
               loadDownloads();
+              showVocalCompare(volumeFilename, d.filename, volumeLUFS + ' LUFS', 'normalize');
             } else if (d.status === 'error') {
               clearInterval(iv); showToast(d.error || 'Normalization failed', 'error');
               prog.classList.remove('visible'); btn.disabled = false;
@@ -2809,7 +2810,10 @@
       }
     }
 
-    function showVocalCompare(originalFile, processedFile, intensity) {
+    let compareMode = 'vocal';
+
+    function showVocalCompare(originalFile, processedFile, intensity, mode) {
+      compareMode = mode || 'vocal';
       const t = Date.now();
       const orig = document.getElementById('compareOriginal');
       const proc = document.getElementById('compareProcessed');
@@ -2820,8 +2824,9 @@
 
       compareSource = 'processed';
       document.getElementById('compareToggle').checked = true;
-      document.getElementById('compareTag').textContent = intensity.toUpperCase();
+      document.getElementById('compareTag').textContent = compareMode === 'vocal' ? intensity.toUpperCase() : intensity;
       document.getElementById('compareFilename').textContent = originalFile;
+      document.getElementById('compareLabelProc').textContent = compareMode === 'vocal' ? 'Vocal Boost' : 'Normalized';
       document.getElementById('comparePlayIcon').style.display = '';
       document.getElementById('comparePauseIcon').style.display = 'none';
       document.getElementById('compareSeek').value = 0;
@@ -2834,9 +2839,13 @@
       orig.onended = resetPlay;
       proc.onended = resetPlay;
 
-      document.querySelectorAll('#compareIntensityRow .chip').forEach(el => {
-        el.classList.toggle('active', el.dataset.intensity === intensity);
-      });
+      document.getElementById('compareIntensityRow').style.display = compareMode === 'vocal' ? '' : 'none';
+      document.getElementById('reprocessBtn').style.display = compareMode === 'vocal' ? '' : 'none';
+      if (compareMode === 'vocal') {
+        document.querySelectorAll('#compareIntensityRow .chip').forEach(el => {
+          el.classList.toggle('active', el.dataset.intensity === intensity);
+        });
+      }
       const dlBtn = document.getElementById('compareDownloadBtn');
       dlBtn.href = '/api/stream/' + encodeURIComponent(processedFile);
       dlBtn.download = processedFile;
