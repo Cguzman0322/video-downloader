@@ -4,536 +4,921 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>vidsave</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23111'/><polygon points='13,8 24,16 13,24' fill='%23C8E619'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231E1E1F'/><polygon points='13,8 24,16 13,24' fill='%23C8E619'/></svg>">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    @property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --bg: #F6F5F1;
-      --black: #111;
-      --gray: #888;
-      --border: #E0DFDB;
+      --surface: rgba(255,255,255,0.7);
+      --surface-solid: #FFFFFF;
+      --surface-hover: #EDECEA;
+      --fg: #1E1E1F;
+      --fg-muted: #5A5A5A;
+      --fg-subtle: #8E8E8E;
+      --border: rgba(200,195,185,0.5);
+      --border-strong: #C8C4BC;
       --accent: #C8E619;
-      --card: #FFFFFF;
-      --radius: 14px;
+      --accent-hover: #D4F026;
+      --accent-fg: #1E1E1F;
+      --accent-surface: rgba(200,230,25,0.12);
+      --accent-glow: rgba(200,230,25,0.15);
+      --success: #16A34A;
+      --success-surface: #DCFCE7;
+      --error: #DC2626;
+      --error-surface: #FEE2E2;
+      --glass: rgba(255,255,255,0.6);
+      --glass-border: rgba(255,255,255,0.4);
+      --shadow: 0 2px 8px rgba(30,30,31,0.06), 0 8px 24px rgba(30,30,31,0.04);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #141414;
+        --surface: rgba(30,30,31,0.6);
+        --surface-solid: #1E1E1F;
+        --surface-hover: #28282A;
+        --fg: #F9F8F5;
+        --fg-muted: #B0AEA8;
+        --fg-subtle: #7A7874;
+        --border: rgba(255,255,255,0.08);
+        --border-strong: #4A4A4C;
+        --accent: #C8E619;
+        --accent-hover: #D4F026;
+        --accent-fg: #1E1E1F;
+        --accent-surface: rgba(200,230,25,0.1);
+        --accent-glow: rgba(200,230,25,0.2);
+        --success: #22C55E;
+        --success-surface: #0A2E16;
+        --error: #EF4444;
+        --error-surface: #3C0A0A;
+        --glass: rgba(30,30,31,0.6);
+        --glass-border: rgba(255,255,255,0.06);
+        --shadow: 0 2px 8px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.2);
+        color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #141414;
+      --surface: rgba(30,30,31,0.6);
+      --surface-solid: #1E1E1F;
+      --surface-hover: #28282A;
+      --fg: #F9F8F5;
+      --fg-muted: #B0AEA8;
+      --fg-subtle: #7A7874;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: #4A4A4C;
+      --accent: #C8E619;
+      --accent-hover: #D4F026;
+      --accent-fg: #1E1E1F;
+      --accent-surface: rgba(200,230,25,0.1);
+      --accent-glow: rgba(200,230,25,0.2);
+      --success: #22C55E;
+      --success-surface: #0A2E16;
+      --error: #EF4444;
+      --error-surface: #3C0A0A;
+      --glass: rgba(30,30,31,0.6);
+      --glass-border: rgba(255,255,255,0.06);
+      --shadow: 0 2px 8px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.2);
+      color-scheme: dark;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
-      color: var(--black);
+      color: var(--fg);
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* ─── NAV ─── */
-    nav {
+    /* ─── GRAIN TEXTURE ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.022;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
+
+    /* ─── AURORA ─── */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.1;
+      animation: drift 25s ease-in-out infinite alternate;
+    }
+
+    .aurora-blob:nth-child(1) {
+      width: 500px; height: 500px;
+      top: -150px; left: 10%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    }
+
+    .aurora-blob:nth-child(2) {
+      width: 400px; height: 400px;
+      bottom: -100px; right: 5%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      animation-delay: -12s;
+      animation-direction: alternate-reverse;
+    }
+
+    .aurora-blob:nth-child(3) {
+      width: 300px; height: 300px;
+      top: 40%; left: 50%;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+      opacity: 0.05;
+      animation-delay: -6s;
+    }
+
+    @keyframes drift {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 30px) scale(1.1); }
+    }
+
+    /* ─── LAYOUT ─── */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ─── HEADER ─── */
+    header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 20px 60px;
+      padding: 20px 0 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: padding 0.3s, background 0.3s, backdrop-filter 0.3s, border-color 0.3s;
+      border-bottom: 1px solid transparent;
+    }
+
+    header.scrolled {
+      padding: 10px 0;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border-bottom-color: var(--glass-border);
     }
 
     .logo {
       font-size: 18px;
       font-weight: 800;
-      letter-spacing: -0.3px;
-      color: var(--black);
+      letter-spacing: -0.4px;
+      color: var(--fg);
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .logo-mark {
-      width: 28px;
-      height: 28px;
-      background: var(--black);
-      border-radius: 7px;
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 8px;
       display: grid;
       place-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 20px var(--accent-glow);
     }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo-mark svg { display: block; }
 
-    .nav-link {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--gray);
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 100px;
-      transition: color 0.2s;
-    }
-
-    .nav-link:hover { color: var(--black); }
-
-    .nav-pill {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--black);
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 8px 20px;
-      border-radius: 100px;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .nav-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--accent);
+    .icon-btn {
+      width: 38px; height: 38px;
+      display: grid;
+      place-items: center;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
       border-radius: 50%;
+      cursor: pointer;
+      color: var(--fg-muted);
+      transition: all 0.2s;
     }
+
+    .icon-btn:hover { color: var(--fg); border-color: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
 
     /* ─── HERO ─── */
     .hero {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 8px 60px 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: start;
+      text-align: center;
+      padding: 48px 0 32px;
     }
-
-    .hero-left { padding-top: 8px; }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--black);
-      margin-bottom: 24px;
-    }
-
-    .hero-badge svg { flex-shrink: 0; }
 
     .hero h1 {
-      font-weight: 900;
-      line-height: 0.88;
-      letter-spacing: -0.02em;
-      color: #0B0B0B;
-      margin-bottom: 20px;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--fg) 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .hero h1 .line1 {
-      display: block;
-      font-size: clamp(56px, 7vw, 88px);
-    }
-
-    .hero h1 .line2 {
-      display: block;
-      font-size: clamp(64px, 8vw, 100px);
-    }
-
-    .hero h1 .accent-dot {
-      display: inline-block;
-      width: clamp(14px, 1.8vw, 22px);
-      height: clamp(14px, 1.8vw, 22px);
-      background: var(--accent);
-      border-radius: 50%;
-      vertical-align: baseline;
-      margin-left: 2px;
-      position: relative;
-      top: -4px;
-    }
-
-    .hero-sub {
-      font-size: 16px;
+    .hero p {
+      font-size: 15px;
+      color: var(--fg-muted);
       font-weight: 400;
-      color: var(--gray);
-      line-height: 1.6;
-      max-width: 380px;
-      margin-bottom: 32px;
     }
 
-    .hero-input-group { max-width: 440px; }
+    /* ─── URL INPUT ─── */
+    .url-outer {
+      position: relative;
+      margin-bottom: 12px;
+    }
 
-    .url-field {
+    .url-outer::before {
+      content: '';
+      position: absolute;
+      inset: -16px;
+      background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%);
+      filter: blur(24px);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .url-outer.focused::before { opacity: 1; }
+
+    .url-wrap {
       display: flex;
       align-items: center;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 6px 6px 6px 16px;
-      margin-bottom: 14px;
-      transition: border-color 0.2s;
+      background: var(--glass);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 100px;
+      padding: 5px 5px 5px 20px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
 
-    .url-field:focus-within { border-color: #ccc; }
+    .url-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.06);
+    }
 
-    .url-field .link-icon {
+    .url-wrap .link-icon {
       flex-shrink: 0;
-      color: var(--gray);
-      margin-right: 8px;
+      color: var(--fg-subtle);
+      margin-right: 10px;
     }
 
-    .url-field input {
+    .url-wrap input {
       flex: 1;
       border: none;
       background: none;
       font-family: inherit;
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--black);
+      font-size: 15px;
+      color: var(--fg);
       outline: none;
       padding: 10px 0;
       min-width: 0;
     }
 
-    .url-field input::placeholder { color: #bbb; }
+    .url-wrap input::placeholder { color: var(--fg-subtle); }
 
-    .paste-btn {
-      display: flex;
+    .url-wrap .clear-btn {
+      display: none;
       align-items: center;
-      gap: 0;
-      padding: 8px 14px;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--black);
-      background: var(--accent);
+      justify-content: center;
+      width: 28px; height: 28px;
       border: none;
-      border-radius: 10px;
+      background: var(--surface-hover);
+      border-radius: 50%;
       cursor: pointer;
-      transition: opacity 0.15s;
+      color: var(--fg-muted);
+      margin-right: 6px;
       flex-shrink: 0;
     }
 
-    .paste-btn:hover { opacity: 0.85; }
-
-    .download-btn {
-      width: 100%;
+    .fetch-btn {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 16px 32px;
+      gap: 6px;
+      padding: 10px 22px;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      color: var(--black);
+      color: var(--accent-fg);
       background: var(--accent);
       border: none;
       border-radius: 100px;
       cursor: pointer;
-      transition: opacity 0.2s;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      box-shadow: 0 0 20px var(--accent-glow);
     }
 
-    .download-btn:hover { opacity: 0.85; }
-    .download-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .fetch-btn:hover { background: var(--accent-hover); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-1px); }
+    .fetch-btn:active { transform: scale(0.97) translateY(0); }
+    .fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    .hero-checks {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-top: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--black);
-    }
-
-    .hero-checks span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .check-icon {
-      width: 18px;
-      height: 18px;
-      background: var(--accent);
-      border-radius: 50%;
+    .platforms {
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      gap: 20px;
+      font-size: 12px;
+      color: var(--fg-subtle);
+      font-weight: 500;
     }
 
-    /* ─── BROWSER MOCKUP ─── */
-    .hero-right { padding-top: 0; min-width: 0; }
-
-    .browser {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.06);
-    }
-
-    .browser-bar {
+    .platforms span {
       display: flex;
       align-items: center;
+      gap: 5px;
+      transition: color 0.2s;
+      cursor: default;
+    }
+
+    .platforms span:hover { color: var(--fg-muted); }
+
+    /* ─── TRUST STRIP ─── */
+    .trust-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .browser-dot:nth-child(1) { background: #FF6058; }
-    .browser-dot:nth-child(2) { background: #FFC02F; }
-    .browser-dot:nth-child(3) { background: #27CA40; }
-
-    .browser-url {
-      flex: 1;
-      margin-left: 12px;
-      padding: 5px 12px;
-      background: var(--bg);
-      border-radius: 8px;
+      margin-top: 14px;
       font-size: 11px;
-      color: var(--gray);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-weight: 600;
+      color: var(--fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
-    .browser-body { padding: 20px; }
+    .trust-strip .dot { width: 3px; height: 3px; background: var(--border-strong); border-radius: 50%; flex-shrink: 0; }
 
-    .mock-thumb {
-      width: 100%;
-      height: 180px;
-      background: linear-gradient(135deg, #e8e7e3 0%, #d8d7d3 100%);
-      border-radius: 12px;
-      display: grid;
-      place-items: center;
-      margin-bottom: 16px;
+    .trust-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ─── GEOMETRIC ACCENTS ─── */
+    .geo-shapes {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .geo-shape {
+      position: absolute;
+      border: 2px solid var(--accent);
+      opacity: 0.06;
+    }
+
+    .geo-shape:nth-child(1) {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      top: 12%; right: 8%;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .geo-shape:nth-child(2) {
+      width: 60px; height: 60px;
+      border-radius: 4px;
+      bottom: 20%; left: 6%;
+      transform: rotate(45deg);
+      animation: float 25s ease-in-out infinite reverse;
+    }
+
+    .geo-shape:nth-child(3) {
+      width: 0; height: 0;
+      border: none;
+      border-left: 30px solid transparent;
+      border-right: 30px solid transparent;
+      border-bottom: 52px solid var(--accent);
+      opacity: 0.04;
+      top: 55%; right: 4%;
+      animation: float 18s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+
+    /* ─── PASTE FLASH ─── */
+    @keyframes paste-glow {
+      0% { box-shadow: 0 0 0 0 rgba(200,230,25,0.5); }
+      100% { box-shadow: 0 0 0 20px rgba(200,230,25,0); }
+    }
+
+    .paste-flash .url-wrap { animation: paste-glow 0.6s ease-out; }
+
+    /* ─── SPRING PHYSICS ─── */
+    .spring-btn {
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s, box-shadow 0.15s;
+    }
+
+    .spring-btn:active { transform: scale(0.94); transition-duration: 0.08s; }
+
+    /* ─── RIPPLE ─── */
+    .ripple-host { position: relative; overflow: hidden; }
+
+    .ripple-host .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: scale(0);
+      animation: rippleOut 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes rippleOut { to { transform: scale(4); opacity: 0; } }
+
+    /* ─── STAGGER REVEAL ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── CONFETTI ─── */
+    @keyframes confetti-pop {
+      0% { transform: scale(0) rotate(0deg); opacity: 1; }
+      100% { transform: scale(1) rotate(var(--rot, 180deg)) translateY(var(--ty, -30px)) translateX(var(--tx, 0px)); opacity: 0; }
+    }
+
+    .confetti-dot {
+      position: absolute;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      animation: confetti-pop 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* ─── TAB BAR ─── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      margin: 32px 0 24px;
       position: relative;
       overflow: hidden;
     }
 
-    .mock-play {
-      width: 48px;
-      height: 48px;
-      background: rgba(0,0,0,0.6);
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-    }
-
-    .mock-duration {
+    .tab-slider {
       position: absolute;
-      bottom: 8px;
-      right: 10px;
+      top: 4px;
+      left: 4px;
+      height: calc(100% - 8px);
       background: var(--accent);
-      color: var(--black);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 4px;
+      border-radius: 100px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
+      box-shadow: 0 0 16px var(--accent-glow);
     }
 
-    .mock-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .mock-avatar {
-      width: 36px;
-      height: 36px;
-      background: var(--border);
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .mock-meta-text { flex: 1; min-width: 0; }
-
-    .mock-title {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: -0.2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .mock-channel {
-      font-size: 12px;
-      color: var(--gray);
-    }
-
-    .mock-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--gray);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 8px;
-    }
-
-    .mock-formats {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .mock-format {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: var(--bg);
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .mock-format.active {
-      box-shadow: inset 0 0 0 2px var(--black);
-      background: #fff;
-    }
-
-    .mock-format .mf-right {
-      font-weight: 400;
-      color: var(--gray);
-      font-size: 12px;
-    }
-
-    .mock-format .mf-dot {
-      width: 14px;
-      height: 14px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
-    }
-
-    .mock-format.active .mf-dot { border-color: var(--black); }
-
-    .mock-format.active .mf-dot::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background: var(--black);
-      border-radius: 50%;
-    }
-
-    .mock-dl-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--accent);
-      color: var(--black);
+    .tab-btn {
+      position: relative;
+      z-index: 1;
       font-family: inherit;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
+      color: var(--fg-muted);
+      background: none;
       border: none;
       border-radius: 100px;
+      padding: 8px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex: 1;
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
+      transition: color 0.2s;
+    }
+
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active { color: var(--accent-fg); }
+
+    .tab-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ─── MAIN ─── */
+    .tab-content { display: none; }
+    .tab-content.active {
+      display: block;
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── PREVIEW CARD ─── */
+    .preview-card {
+      display: none;
+      margin-top: 16px;
+      background: var(--glass);
+      backdrop-filter: blur(20px) saturate(1.3);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .preview-card.visible { display: block; animation: fadeUp 0.3s ease; }
+
+    .preview-top {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .preview-thumb {
+      width: 160px; height: 90px;
+      background: var(--surface-hover);
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .preview-duration {
+      position: absolute;
+      bottom: 6px; right: 6px;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .preview-info { flex: 1; min-width: 0; }
+
+    .preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .preview-channel { font-size: 12px; color: var(--fg-muted); }
+
+    .preview-platform {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--fg-subtle);
+      background: var(--surface-hover);
+      padding: 3px 8px;
+      border-radius: 100px;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
 
     /* ─── CAROUSEL ─── */
     .carousel-strip {
-      display: flex;
-      gap: 8px;
+      display: none;
+      gap: 6px;
+      padding: 0 16px 12px;
       overflow-x: auto;
-      padding: 4px 0 12px;
-      margin-bottom: 8px;
+      scrollbar-width: none;
     }
-    .carousel-strip::-webkit-scrollbar { height: 4px; }
-    .carousel-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .carousel-strip::-webkit-scrollbar { display: none; }
+    .carousel-strip.visible { display: flex; }
+
     .carousel-thumb {
-      width: 72px;
-      height: 72px;
+      width: 56px; height: 56px;
       border-radius: 10px;
       overflow: hidden;
       cursor: pointer;
       flex-shrink: 0;
       border: 2px solid transparent;
       position: relative;
-      background: var(--border);
-      transition: border-color 0.15s;
+      background: var(--surface-hover);
+      transition: all 0.15s;
     }
-    .carousel-thumb.selected { border-color: var(--accent); }
-    .carousel-thumb:hover { border-color: var(--gray); }
+
+    .carousel-thumb.selected { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+    .carousel-thumb:hover { border-color: var(--fg-subtle); }
     .carousel-thumb.selected:hover { border-color: var(--accent); }
-    .carousel-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
     .carousel-badge {
       position: absolute;
-      bottom: 4px;
-      right: 4px;
+      bottom: 3px; right: 3px;
       background: rgba(0,0,0,0.6);
-      border-radius: 3px;
-      padding: 2px 4px;
+      border-radius: 4px;
+      padding: 1px 3px;
       display: flex;
       align-items: center;
     }
 
-    /* ─── COMPRESS UPLOAD ─── */
-    .compress-section {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 40px 60px 0;
+    /* ─── FORMATS ─── */
+    .formats-section { padding: 0 16px 12px; }
+
+    .formats-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
     }
 
-    .compress-header {
+    .formats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .format-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface-hover);
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .format-option:hover { border-color: var(--border-strong); }
+
+    .format-option.active {
+      border-color: var(--accent);
+      background: var(--accent-surface);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .format-option .fo-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .format-dot {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border-strong);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .format-option.active .format-dot { border-color: var(--accent); }
+    .format-option.active .format-dot::after {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .format-size {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+
+    /* ─── PREVIEW ACTIONS ─── */
+    .preview-actions {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .dl-start-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-fg);
+      background: var(--accent);
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .dl-start-btn:hover { background: var(--accent-hover); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-1px); }
+    .dl-start-btn:active { transform: scale(0.97); }
+    .dl-start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .reset-btn {
+      width: 44px; height: 44px;
+      display: grid;
+      place-items: center;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--fg-muted);
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .reset-btn:hover { color: var(--fg); border-color: var(--accent); }
+
+    /* ─── PROGRESS ─── */
+    .progress-wrap {
+      display: none;
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+    }
+
+    .progress-wrap.visible { display: block; animation: fadeUp 0.2s ease; }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-label {
+      font-size: 13px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+
+    .progress-pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar-track {
+      height: 4px;
+      background: var(--surface-hover);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent) 0%, #E2FE00 50%, var(--accent) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease infinite;
+      transition: width 0.4s ease;
+    }
+
+    @keyframes shimmer { 0% { background-position: -100% 0; } 100% { background-position: 100% 0; } }
+
+    /* ─── TOOL SECTIONS ─── */
+    .tool-header {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
-    .compress-header h3 {
-      font-size: 18px;
+    .tool-header h2 {
+      font-size: 20px;
       font-weight: 800;
+      letter-spacing: -0.03em;
     }
 
-    .compress-badge {
+    .tool-badge {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 500;
       background: var(--accent);
-      color: var(--black);
+      color: var(--accent-fg);
       padding: 3px 10px;
       border-radius: 100px;
+      box-shadow: 0 0 12px var(--accent-glow);
     }
 
+    /* ─── CHIP PICKER ─── */
+    .chip-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .chip-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--fg-muted);
+      margin-right: 4px;
+    }
+
+    .chip {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--fg-muted);
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chip:hover { border-color: var(--accent); color: var(--fg); }
+
+    .chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-fg);
+      font-weight: 600;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* ─── DROP ZONE ─── */
     .drop-zone {
       border: 2px dashed var(--border);
-      border-radius: 16px;
-      padding: 40px 24px;
+      border-radius: 20px;
+      padding: 44px 24px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: var(--card);
+      transition: all 0.2s;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
     }
 
     .drop-zone:hover, .drop-zone.drag-over {
       border-color: var(--accent);
-      background: #FAFFF0;
+      background: var(--accent-surface);
+      box-shadow: 0 0 30px var(--accent-glow);
     }
 
-    .drop-zone-icon {
-      width: 48px;
-      height: 48px;
-      background: var(--bg);
+    .drop-icon {
+      width: 48px; height: 48px;
+      background: var(--surface-hover);
       border: 1px solid var(--border);
       border-radius: 14px;
       display: inline-grid;
@@ -541,938 +926,1006 @@
       margin-bottom: 12px;
     }
 
-    .drop-zone h4 {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
+    .drop-zone h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .drop-zone p { font-size: 12px; color: var(--fg-muted); }
 
-    .drop-zone p {
-      font-size: 13px;
-      color: var(--gray);
-    }
-
-    .compress-progress {
+    /* ─── TOOL PROGRESS ─── */
+    .tool-progress {
       display: none;
       margin-top: 14px;
-      padding: 18px 20px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      padding: 14px 16px;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
     }
 
-    .compress-progress.visible { display: block; }
+    .tool-progress.visible { display: block; animation: fadeUp 0.2s ease; }
 
-    .compress-progress-top {
+    .tool-progress .progress-result { margin-top: 8px; font-size: 12px; color: var(--fg-muted); }
+    .tool-progress .progress-result strong { color: var(--success); font-weight: 600; }
+
+    /* ─── DOWNLOADS DROPDOWN ─── */
+    .downloads-section {
+      display: none;
+      margin-top: 36px;
+    }
+
+    .downloads-toggle {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .compress-progress-label {
-      font-size: 13px;
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 70%;
-    }
-
-    .compress-progress-pct {
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .compress-bar-track {
-      height: 6px;
-      background: var(--bg);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .compress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s;
-      width: 0%;
-    }
-
-    .compress-result {
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--gray);
-    }
-
-    .compress-result strong {
-      color: #1a7a1a;
-      font-weight: 700;
-    }
-
-    /* ─── FORMAT CHIPS ─── */
-    .format-chip {
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      cursor: pointer;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 600;
-      color: var(--gray);
-      background: var(--card);
+      color: var(--fg);
+      transition: all 0.2s;
+    }
+
+    .downloads-toggle:hover { border-color: var(--accent); }
+
+    .downloads-toggle .dt-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dl-count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px; height: 22px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 100px;
+      padding: 0 6px;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .dt-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dt-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .dt-actions button {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--fg-muted);
+      background: var(--surface-hover);
       border: 1px solid var(--border);
       border-radius: 100px;
-      padding: 6px 14px;
+      padding: 4px 12px;
       cursor: pointer;
       transition: all 0.15s;
     }
 
-    .format-chip:hover { border-color: #ccc; color: var(--black); }
+    .dt-actions button:hover { border-color: var(--accent); color: var(--fg); }
 
-    .format-chip.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--black);
-      font-weight: 700;
-    }
-
-    /* ─── FEATURES ─── */
-    .features-section {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 48px 60px 0;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .feature-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px 20px;
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-    }
-
-    .feature-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
+    .chevron-icon {
+      color: var(--fg-subtle);
+      transition: transform 0.25s ease;
       flex-shrink: 0;
     }
 
-    .feature-text h4 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 2px;
+    .downloads-section.expanded .chevron-icon { transform: rotate(180deg); }
+
+    .downloads-list-wrap {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .feature-text p {
-      font-size: 12px;
-      color: var(--gray);
-      line-height: 1.4;
-    }
-
-    /* ─── DOWNLOADS ─── */
-    .downloads-section {
-      display: none;
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 40px 60px 0;
-    }
-
-    .downloads-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .downloads-header h3 {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .open-folder-btn {
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gray);
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 6px 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .open-folder-btn:hover { border-color: #ccc; }
+    .downloads-section.expanded .downloads-list-wrap { max-height: 600px; }
 
     .downloads-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
+      padding: 8px 0 4px;
+      max-height: 540px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
 
-    .download-item {
+    .dl-item {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      background: var(--card);
-      border: 1px solid var(--border);
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
       border-radius: 14px;
+      transition: all 0.15s;
     }
 
-    .dl-thumb {
-      width: 52px;
-      height: 52px;
-      background: var(--border);
-      border-radius: 8px;
+    .dl-item:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow); }
+
+    .dl-icon {
+      width: 36px; height: 36px;
+      background: var(--surface-hover);
+      border-radius: 10px;
       flex-shrink: 0;
       display: grid;
       place-items: center;
+      color: var(--fg-subtle);
     }
 
     .dl-info { flex: 1; min-width: 0; }
 
     .dl-name {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .dl-meta {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--gray);
-      margin-top: 2px;
+      color: var(--fg-subtle);
+      font-variant-numeric: tabular-nums;
     }
 
-    .dl-date {
-      font-size: 11px;
-      color: var(--gray);
+    .dl-actions {
+      display: flex;
+      gap: 4px;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
-    .shrink-btn {
+    .action-btn {
       font-family: inherit;
       font-size: 11px;
       font-weight: 600;
-      color: var(--black);
-      background: var(--bg);
+      color: var(--fg-muted);
+      background: var(--surface-hover);
       border: 1px solid var(--border);
       border-radius: 100px;
-      padding: 5px 12px;
+      padding: 4px 10px;
       cursor: pointer;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: border-color 0.15s, background 0.15s;
+      transition: all 0.15s;
     }
 
-    .shrink-btn:hover { border-color: #ccc; background: #eee; }
-    .shrink-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .action-btn:hover { border-color: var(--accent); color: var(--fg); }
+    .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .meta-btn {
+    .action-btn.primary {
       background: var(--accent);
       border-color: var(--accent);
-      font-weight: 700;
-    }
-    .meta-btn:hover { background: #b8d617; border-color: #b8d617; }
-
-    .shrink-progress {
-      margin-top: 8px;
-      padding: 12px 18px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      color: var(--accent-fg);
+      box-shadow: 0 0 8px var(--accent-glow);
     }
 
-    .shrink-progress-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+    .action-btn.primary:hover { background: var(--accent-hover); }
+
+    .action-btn.accent-soft {
+      background: var(--accent-surface);
+      border-color: transparent;
+      color: var(--fg);
     }
 
-    .shrink-progress-label {
-      font-size: 12px;
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 70%;
-    }
+    .action-btn.accent-soft:hover { border-color: var(--accent); }
 
-    .shrink-progress-pct {
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .shrink-bar-track {
-      height: 5px;
-      background: var(--bg);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .shrink-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s;
-      width: 0%;
-    }
-
-    .shrink-result {
-      margin-top: 6px;
+    .dl-date {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--gray);
+      color: var(--fg-subtle);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
 
-    .shrink-result strong {
-      color: #1a7a1a;
-      font-weight: 700;
+    /* ─── INLINE PROGRESS ─── */
+    .inline-progress {
+      margin: 4px 0 4px;
+      padding: 10px 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
     }
 
-    /* ─── PROGRESS ─── */
-    .progress-section {
-      display: none;
-      padding: 16px 0 0;
+    .inline-progress .progress-result { margin-top: 6px; font-size: 11px; color: var(--fg-muted); }
+    .inline-progress .progress-result strong { color: var(--success); font-weight: 600; }
+
+    /* ─── SONG ANALYZER ─── */
+    @keyframes pulse-bar {
+      0% { width: 30%; } 50% { width: 70%; } 100% { width: 30%; }
     }
 
-    .progress-section.visible { display: block; }
-
-    .progress-card {
-      max-width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 24px;
+    .analyzer-inline {
+      margin: 4px 0 6px;
+      padding: 14px;
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
     }
 
-    .progress-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .progress-label {
-      font-size: 13px;
-      font-weight: 600;
-      max-width: 75%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .progress-pct { font-size: 13px; font-weight: 800; }
-
-    .progress-bar-track {
-      height: 6px;
-      background: var(--bg);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 3px;
-      transition: width 0.3s;
-      width: 0%;
-    }
-
-    /* ─── SUCCESS ─── */
-    .success-msg {
-      display: none;
-      padding: 16px 0 0;
-    }
-
-    .success-msg.visible { display: block; }
-
-    .success-inner {
+    .analyzer-status {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 14px 18px;
-      background: #F0FAF0;
-      border: 1px solid #C6E7C6;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 600;
-      color: #1a7a1a;
-    }
-
-
-    /* ─── ERROR ─── */
-    .error-msg {
-      display: none;
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 0 60px;
-    }
-
-    .error-msg.visible { display: block; }
-
-    .error-inner {
-      padding: 14px 18px;
-      background: #FEF2F2;
-      border: 1px solid #FECACA;
-      border-radius: var(--radius);
       font-size: 13px;
       font-weight: 500;
-      color: #dc2626;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
     }
 
-    /* ─── HOW IT WORKS ─── */
-    .how-section {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 56px 60px 48px;
-    }
-
-    .how-header {
-      text-align: center;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-    }
-
-    .how-line {
-      width: 60px;
-      height: 3px;
-      background: var(--accent);
+    .analyzer-bar-track {
+      height: 4px;
+      background: var(--surface-hover);
       border-radius: 2px;
-    }
-
-    .how-header h2 {
-      font-size: clamp(28px, 3.5vw, 40px);
-      font-weight: 900;
-      letter-spacing: -1px;
-      font-style: italic;
-    }
-
-    .how-subtitle {
-      text-align: center;
-      font-size: 15px;
-      color: var(--gray);
-      margin-bottom: 40px;
-    }
-
-    .how-steps {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 0;
-    }
-
-    .how-step {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px 24px 32px;
-      flex: 1;
-      max-width: 280px;
-    }
-
-    .step-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .step-icon-circle {
-      width: 44px;
-      height: 44px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-    }
-
-    .step-number-badge {
-      width: 24px;
-      height: 24px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--black);
-      flex-shrink: 0;
-    }
-
-    .step-content h3 {
-      font-size: 15px;
-      font-weight: 700;
+      overflow: hidden;
       margin-bottom: 4px;
     }
 
-    .step-content p {
-      font-size: 12px;
-      color: var(--gray);
-      line-height: 1.5;
+    .analyzer-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: width 0.3s;
     }
 
-    .step-arrow {
+    .analyzer-bar-fill.pulsing {
+      animation: pulse-bar 2s ease-in-out infinite;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover), var(--accent));
+      background-size: 200% 100%;
+    }
+
+    .analyzer-pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--fg-subtle);
+      text-align: right;
+    }
+
+    .section-card {
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      padding-top: 40px;
-      color: var(--border);
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface-hover);
+      border-radius: 12px;
+      margin-bottom: 5px;
+    }
+
+    .section-label-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      flex-shrink: 0;
+      min-width: 60px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .section-info { flex: 1; min-width: 0; }
+    .section-time { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; }
+    .section-meta { font-size: 11px; color: var(--fg-muted); }
+
+    .section-energy-bar {
+      width: 50px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .section-energy-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+    .section-btns { display: flex; gap: 4px; flex-shrink: 0; }
+
+    .section-cut-btn, .section-resize-btn {
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      border-radius: 100px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .section-cut-btn { color: var(--accent-fg); background: var(--accent); }
+    .section-resize-btn { color: var(--fg); background: var(--surface-hover); border: 1px solid var(--border); }
+
+    .section-cut-btn:hover, .section-resize-btn:hover { opacity: 0.85; }
+    .section-cut-btn:disabled, .section-resize-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .cut-all-btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-fg);
+      background: var(--accent);
+      border: none;
+      border-radius: 100px;
+      padding: 10px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 8px;
+      box-shadow: 0 0 16px var(--accent-glow);
+      transition: all 0.15s;
+    }
+
+    .cut-all-btn:hover { box-shadow: 0 0 24px var(--accent-glow); transform: translateY(-1px); }
+    .cut-all-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ─── VOLUME BOOSTER ─── */
+    .volume-card { margin-top: 14px; padding: 20px; background: var(--glass); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 20px; display: none; }
+    .volume-card.visible { display: block; animation: fadeUp 0.3s ease; }
+    .volume-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .volume-stat { text-align: center; padding: 12px 8px; background: var(--surface-hover); border-radius: 14px; }
+    .vs-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .vs-label { font-size: 11px; color: var(--fg-muted); margin-top: 2px; font-weight: 500; }
+    .lufs-meter { position: relative; margin-bottom: 20px; padding-top: 22px; }
+    .lufs-track { position: relative; height: 28px; background: var(--surface-hover); border-radius: 8px; overflow: visible; }
+    .lufs-target-line { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--accent); z-index: 2; }
+    .lufs-target-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: var(--accent); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+    .lufs-current-marker { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 14px; background: var(--fg); border: 2.5px solid var(--surface-solid); border-radius: 50%; z-index: 3; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .lufs-scale { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--fg-subtle); }
+    .volume-verdict { text-align: center; margin-bottom: 16px; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600; }
+    .volume-verdict.quiet { background: var(--error-surface); color: var(--error); }
+    .volume-verdict.good { background: var(--success-surface); color: var(--success); }
+    .volume-verdict.loud { background: var(--error-surface); color: var(--error); }
+    .normalize-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--accent-fg); background: var(--accent); border: none; border-radius: 100px; cursor: pointer; transition: all 0.15s; box-shadow: 0 0 20px var(--accent-glow); }
+    .normalize-btn:hover { background: var(--accent-hover); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-1px); }
+    .normalize-btn:active { transform: scale(0.97); }
+    .normalize-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ─── A/B COMPARE ─── */
+    .volume-compare { margin-top: 16px; padding: 24px; background: var(--glass); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 20px; display: none; }
+    .volume-compare.visible { display: block; animation: fadeUp 0.3s ease; }
+    .compare-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .compare-header h4 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+    .compare-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; background: var(--accent); color: var(--accent-fg); letter-spacing: 0.5px; }
+    .compare-filename { font-size: 12px; color: var(--muted); margin-bottom: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .compare-player { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .compare-play-btn { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; box-shadow: 0 0 20px var(--accent-glow); }
+    .compare-play-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--accent-glow); }
+    .compare-play-btn:active { transform: scale(0.95); }
+    .compare-seek-wrap { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .compare-seek { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: var(--border); outline: none; cursor: pointer; }
+    .compare-seek::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 0 8px var(--accent-glow); }
+    .compare-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .compare-toggle-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 20px; padding: 12px 0; }
+    .compare-toggle-label { font-size: 13px; font-weight: 600; color: var(--muted); transition: color 0.2s; cursor: pointer; }
+    .compare-toggle-label.active { color: var(--accent); }
+    .compare-toggle { position: relative; width: 52px; height: 28px; display: inline-block; flex-shrink: 0; }
+    .compare-toggle input { display: none; }
+    .compare-toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 28px; cursor: pointer; transition: background 0.25s; }
+    .compare-toggle-slider::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: transform 0.25s; }
+    .compare-toggle input:checked + .compare-toggle-slider { background: var(--accent); }
+    .compare-toggle input:checked + .compare-toggle-slider::before { transform: translateX(24px); background: var(--accent-fg); }
+    .compare-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .reprocess-btn { flex: 1; padding: 10px 20px; font-family: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--border); background: var(--glass); color: var(--text); border-radius: 100px; cursor: pointer; transition: all 0.15s; }
+    .reprocess-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .reprocess-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ─── TOAST ─── */
+    .toast-container {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 500;
+      max-width: 360px;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: opacity 0.25s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toast.visible { opacity: 1; transform: translateX(0); }
+
+    .toast-stripe {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .toast-error .toast-stripe { background: var(--error); box-shadow: 0 0 8px rgba(220,38,38,0.3); }
+    .toast-success .toast-stripe { background: var(--success); box-shadow: 0 0 8px rgba(22,163,74,0.3); }
+
+    .toast-msg { flex: 1; min-width: 0; }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--fg-subtle);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 2px;
+      flex-shrink: 0;
+      line-height: 1;
     }
 
     /* ─── FOOTER ─── */
     footer {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 0 60px 48px;
+      padding: 56px 0 40px;
+      text-align: center;
     }
 
     .footer-inner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
       font-size: 12px;
-      color: var(--gray);
+      color: var(--fg-subtle);
+      padding-top: 20px;
+      border-top: 1px solid transparent;
+      background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(90deg, transparent, var(--border), transparent);
+      background-origin: padding-box, border-box;
+      background-clip: padding-box, border-box;
+      border-top: 1px solid transparent;
     }
 
     /* ─── RESPONSIVE ─── */
-    @media (max-width: 1000px) {
-      nav { padding: 20px 28px; }
-      .nav-link { display: none; }
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 24px 28px 0;
-        gap: 40px;
-      }
-      .hero-left { padding-top: 0; }
-      .features-section { padding: 40px 28px 0; }
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
-      .how-section { padding: 48px 28px; }
-      .how-steps { flex-direction: column; align-items: center; }
-      .step-arrow { display: none; }
-      .how-step { max-width: 100%; }
-      .compress-section { padding: 32px 28px 0; }
-      .downloads-section { padding: 32px 28px 0; }
-      .progress-section,
-      .success-msg,
-      .error-msg { padding-left: 28px; padding-right: 28px; }
-      footer { padding: 0 28px 40px; }
+    @media (max-width: 600px) {
+      .page-wrap { padding: 0 16px; }
+      .hero h1 { font-size: 1.6rem; }
+      .preview-top { flex-direction: column; }
+      .preview-thumb { width: 100%; height: 160px; }
+      .tab-btn { padding: 8px 10px; font-size: 12px; }
+      .tab-btn svg { display: none; }
+      .dl-item { flex-wrap: wrap; }
+      .dl-actions { width: 100%; justify-content: flex-start; margin-top: 6px; }
+      .section-card { flex-wrap: wrap; }
+      .section-btns { width: 100%; margin-top: 4px; }
     }
 
-    @media (max-width: 600px) {
-      .hero h1 .line1 { font-size: 48px; }
-      .hero h1 .line2 { font-size: 56px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .hero-checks { flex-wrap: wrap; gap: 12px; }
-      .dl-name { max-width: 180px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+      .aurora-blob { opacity: 0.06 !important; animation: none !important; }
     }
   </style>
 </head>
 <body>
-
-  <!-- NAV -->
-  <nav>
-    <a href="#" class="logo" onclick="scrollToTop(); return false;">
-      <div class="logo-mark">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg>
-      </div>
-      vidsave
-    </a>
-    <div class="nav-right">
-      <a href="#how" class="nav-link">How it works</a>
-      <a href="#features" class="nav-link">Features</a>
-      <a href="#" class="nav-pill"><span class="nav-dot"></span> No signup needed</a>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-left">
-      <div class="hero-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        Fast. Private. No Signup.
-      </div>
-
-      <h1><span class="line1">Save</span><span class="line2">Videos<span class="accent-dot"></span></span></h1>
-      <p class="hero-sub">Download videos from YouTube, Instagram, TikTok &amp; Facebook in seconds.</p>
-
-      <div class="hero-input-group">
-        <div class="url-field">
-          <svg class="link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
-          <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." autofocus>
-          <button class="paste-btn" id="clearInput" onclick="clearUrlInput()" style="display:none">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <button class="download-btn" id="fetchBtn" onclick="fetchInfo()">
-          Download
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-
-      <div class="hero-checks">
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> No signup</span>
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> Private</span>
-        <span><span class="check-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12l4 4 8-8"/></svg></span> Free</span>
-      </div>
-    </div>
-
-    <!-- BROWSER PREVIEW -->
-    <div class="hero-right">
-      <div class="browser" id="browserPreview">
-        <div class="browser-bar">
-          <div class="browser-dot"></div>
-          <div class="browser-dot"></div>
-          <div class="browser-dot"></div>
-          <div class="browser-url">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            youtube.com/watch?v=dQw4w9WgXcQ
-          </div>
-        </div>
-        <div class="browser-body">
-          <!-- PLACEHOLDER STATE -->
-          <div id="browserPlaceholder">
-            <div class="mock-thumb" style="background:linear-gradient(135deg,#f0c27f 0%,#fc5c7d 50%,#6a82fb 100%)">
-              <div class="mock-play">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg>
-              </div>
-              <span class="mock-duration">4:32</span>
-            </div>
-            <div class="mock-meta">
-              <div class="mock-avatar"></div>
-              <div class="mock-meta-text">
-                <div class="mock-title">Summer Vibes Playlist 2026</div>
-                <div class="mock-channel">@musicchannel &middot; 2.4M views</div>
-              </div>
-            </div>
-            <div class="mock-label">Quality</div>
-            <div class="mock-formats">
-              <div class="mock-format active">
-                <div><span class="mf-dot"></span>1080p MP4</div>
-                <span class="mf-right">48.2 MB</span>
-              </div>
-              <div class="mock-format">
-                <div><span class="mf-dot"></span>720p MP4</div>
-                <span class="mf-right">24.1 MB</span>
-              </div>
-              <div class="mock-format">
-                <div><span class="mf-dot"></span>MP3 Audio</div>
-                <span class="mf-right">6.8 MB</span>
-              </div>
-            </div>
-            <div class="mock-dl-btn" style="opacity:0.4;cursor:default">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Download
-            </div>
-          </div>
-
-          <!-- LIVE STATE -->
-          <div id="browserLive" style="display:none;position:relative">
-            <div class="mock-thumb" id="liveThumbWrap">
-              <img id="liveThumb" src="" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;display:none">
-              <div class="mock-play" id="livePlayIcon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg>
-              </div>
-              <span class="mock-duration" id="liveDuration"></span>
-            </div>
-            <div class="mock-meta">
-              <div class="mock-avatar" id="liveAvatar"></div>
-              <div class="mock-meta-text">
-                <div class="mock-title" id="liveTitle"></div>
-                <div class="mock-channel" id="liveChannel"></div>
-              </div>
-            </div>
-            <div id="carouselStrip" class="carousel-strip" style="display:none"></div>
-            <div class="mock-label" id="qualityLabel">Quality</div>
-            <div class="mock-formats" id="liveFormats"></div>
-            <button class="mock-dl-btn" id="liveDlBtn" onclick="startDownload()" style="cursor:pointer;border:none;font-family:inherit">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              Download
-            </button>
-            <button onclick="resetForNew()" style="width:100%;margin-top:8px;padding:10px;background:none;border:none;font-family:inherit;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:color 0.15s" onmouseover="this.style.color='var(--black)'" onmouseout="this.style.color='var(--gray)'">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-              Reset
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PROGRESS -->
-      <div class="progress-section" id="progressSection">
-        <div class="progress-card">
-          <div class="progress-top">
-            <span class="progress-label" id="progressLabel">Downloading...</span>
-            <span class="progress-pct" id="progressPct">0%</span>
-          </div>
-          <div class="progress-bar-track">
-            <div class="progress-bar-fill" id="progressBar"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUCCESS -->
-      <div class="success-msg" id="successMsg">
-        <div class="success-inner">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
-          Download complete
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ERROR -->
-  <div class="error-msg" id="errorMsg"><div class="error-inner" id="errorText"></div></div>
-
-  <!-- COMPRESS FOR META -->
-  <section class="compress-section" id="compressSection">
-    <div class="compress-header">
-      <h3>Compress for Meta</h3>
-      <span class="compress-badge">30MB</span>
-    </div>
-    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileUpload').click()">
-      <div class="drop-zone-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
-      <h4>Drop a video file here</h4>
-      <p>or click to browse &middot; MP4, MOV, WEBM, MKV</p>
-    </div>
-    <input type="file" id="fileUpload" accept="video/*" style="display:none">
-    <div class="compress-progress" id="compressProgress">
-      <div class="compress-progress-top">
-        <span class="compress-progress-label" id="compressLabel">Uploading...</span>
-        <span class="compress-progress-pct" id="compressPct">0%</span>
-      </div>
-      <div class="compress-bar-track">
-        <div class="compress-bar-fill" id="compressBar"></div>
-      </div>
-      <div class="compress-result" id="compressResult"></div>
-    </div>
-  </section>
-
-  <!-- IMAGE CONVERTER -->
-  <section class="compress-section" id="convertSection">
-    <div class="compress-header">
-      <h3>Image Converter</h3>
-      <span class="compress-badge">HEIC, PNG, WEBP &rarr;</span>
-    </div>
-    <div class="convert-controls" style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
-      <span style="font-size:13px;font-weight:600;color:var(--gray)">Convert to:</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="formatPicker">
-        <button class="format-chip active" data-fmt="jpeg" onclick="pickFormat(this)">JPEG</button>
-        <button class="format-chip" data-fmt="png" onclick="pickFormat(this)">PNG</button>
-        <button class="format-chip" data-fmt="heic" onclick="pickFormat(this)">HEIC</button>
-        <button class="format-chip" data-fmt="tiff" onclick="pickFormat(this)">TIFF</button>
-        <button class="format-chip" data-fmt="gif" onclick="pickFormat(this)">GIF</button>
-        <button class="format-chip" data-fmt="bmp" onclick="pickFormat(this)">BMP</button>
-      </div>
-    </div>
-    <div class="drop-zone" id="imgDropZone" onclick="document.getElementById('imgUpload').click()">
-      <div class="drop-zone-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      </div>
-      <h4>Drop an image here</h4>
-      <p>or click to browse &middot; HEIC, PNG, JPG, WEBP, TIFF, BMP, GIF</p>
-    </div>
-    <input type="file" id="imgUpload" accept="image/*,.heic,.heif" style="display:none">
-    <div class="compress-progress" id="convertProgress">
-      <div class="compress-progress-top">
-        <span class="compress-progress-label" id="convertLabel">Converting...</span>
-        <span class="compress-progress-pct" id="convertPct"></span>
-      </div>
-      <div class="compress-bar-track">
-        <div class="compress-bar-fill" id="convertBar" style="width:0%"></div>
-      </div>
-      <div class="compress-result" id="convertResult"></div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="features-section" id="features">
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <div class="feature-text">
-          <h4>Fast Downloads</h4>
-          <p>Seconds, not minutes.</p>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
-        <div class="feature-text">
-          <h4>Private</h4>
-          <p>We never store your files.</p>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="900" fill="#111" stroke="none">4K</text></svg>
-        </div>
-        <div class="feature-text">
-          <h4>HD Quality</h4>
-          <p>Original resolution.</p>
-        </div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="M18.178 8c5.096 0 5.096 8 0 8"/><path d="M5.822 8c-5.096 0-5.096 8 0 8"/><path d="M18.178 8H5.822"/><path d="M18.178 16H5.822"/></svg>
-        </div>
-        <div class="feature-text">
-          <h4>Unlimited</h4>
-          <p>No signup required.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- DOWNLOADS -->
-  <div class="downloads-section" id="downloadsSection">
-    <div class="downloads-header">
-      <h3>Recent Downloads</h3>
-      <div style="display:flex;gap:8px">
-        <button class="open-folder-btn" onclick="clearDownloads()">
-          Clear
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-        <button class="open-folder-btn" onclick="openDownloads()">
-          Open folder
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="downloads-list" id="downloadsList"></div>
+  <div class="aurora">
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
   </div>
 
-  <!-- HOW IT WORKS -->
-  <section class="how-section" id="how">
-    <div class="how-header">
-      <span class="how-line"></span>
-      <h2>How it works</h2>
-      <span class="how-line"></span>
+  <div class="geo-shapes">
+    <div class="geo-shape"></div>
+    <div class="geo-shape"></div>
+    <div class="geo-shape"></div>
+  </div>
+
+  <div class="page-wrap">
+    <header>
+      <a href="#" class="logo" onclick="scrollToTop(); return false;">
+        <div class="logo-mark">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#1E1E1F"/></svg>
+        </div>
+        vidsave
+      </a>
+      <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </header>
+
+    <!-- ─── HERO ─── -->
+    <div class="hero">
+      <h1>Grab any video.<br>From anywhere.</h1>
+      <p>Download, compress, resize &amp; convert — all in one place.</p>
     </div>
-    <p class="how-subtitle">Three simple steps to download any video.</p>
 
-    <div class="how-steps">
-      <div class="how-step">
-        <div class="step-top">
-          <div class="step-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
-          </div>
-          <div class="step-number-badge">1</div>
-          <h3 style="font-size:14px;font-weight:700">Paste your link</h3>
-        </div>
-        <div class="step-content">
-          <p>Copy any YouTube, TikTok, or Facebook URL and paste it in.</p>
-        </div>
-      </div>
-
-      <div class="step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-
-      <div class="how-step">
-        <div class="step-top">
-          <div class="step-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><polygon points="10,7 16,10 10,13" fill="#111" stroke="none"/></svg>
-          </div>
-          <div class="step-number-badge">2</div>
-          <h3 style="font-size:14px;font-weight:700">Choose quality</h3>
-        </div>
-        <div class="step-content">
-          <p>Select 4K, 1080p, 720p or MP3.</p>
-        </div>
-      </div>
-
-      <div class="step-arrow">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </div>
-
-      <div class="how-step">
-        <div class="step-top">
-          <div class="step-icon-circle">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          </div>
-          <div class="step-number-badge">3</div>
-          <h3 style="font-size:14px;font-weight:700">Download</h3>
-        </div>
-        <div class="step-content">
-          <p>Your video starts instantly. No signup required.</p>
-        </div>
+    <!-- ─── URL INPUT ─── -->
+    <div class="url-outer" id="urlOuter">
+      <div class="url-wrap">
+        <svg class="link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>
+        <input type="text" id="urlInput" placeholder="Paste a video link..." autofocus>
+        <button class="clear-btn" id="clearBtn" onclick="clearUrl()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <button class="fetch-btn spring-btn ripple-host" id="fetchBtn" onclick="fetchInfo()">
+          Grab it
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
       </div>
     </div>
-  </section>
 
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-      Made for creators, learners and anyone who loves great content.
+    <div class="platforms">
+      <span>YouTube</span>
+      <span>TikTok</span>
+      <span>Instagram</span>
+      <span>Facebook</span>
     </div>
-  </footer>
 
+    <div class="trust-strip">
+      <span>No ads</span>
+      <span class="dot"></span>
+      <span>No tracking</span>
+      <span class="dot"></span>
+      <span><span class="trust-counter" id="dlCounter">0</span> downloads</span>
+    </div>
+
+    <!-- Preview Card -->
+    <div class="preview-card" id="previewCard">
+      <div class="preview-top">
+        <div class="preview-thumb" id="previewThumb">
+          <img id="previewImg" src="" alt="" style="display:none">
+          <span class="preview-duration" id="previewDuration"></span>
+        </div>
+        <div class="preview-info">
+          <div class="preview-title" id="previewTitle"></div>
+          <div class="preview-channel" id="previewChannel"></div>
+          <div class="preview-platform" id="previewPlatform"></div>
+        </div>
+      </div>
+      <div class="carousel-strip" id="carouselStrip"></div>
+      <div class="formats-section" id="formatsSection">
+        <div class="formats-label">Quality</div>
+        <div class="formats-list" id="formatsList"></div>
+      </div>
+      <div class="preview-actions">
+        <button class="dl-start-btn spring-btn ripple-host" id="startDlBtn" onclick="startDownload()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download
+        </button>
+        <button class="reset-btn" onclick="resetPreview()" title="New download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="dlProgress">
+      <div class="progress-top">
+        <span class="progress-label" id="dlProgressLabel">Downloading...</span>
+        <span class="progress-pct" id="dlProgressPct">0%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="dlProgressBar"></div></div>
+    </div>
+
+    <!-- ─── TAB BAR ─── -->
+    <nav class="tab-bar reveal" id="tabBar" role="tablist">
+      <div class="tab-slider" id="tabSlider"></div>
+      <button class="tab-btn active" data-tab="compress" onclick="switchTab('compress')" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v6m0 6v6M9 6l3-3 3 3M9 18l3 3 3-3"/></svg>
+        Compress
+      </button>
+      <button class="tab-btn" data-tab="resize" onclick="switchTab('resize')" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>
+        Resize
+      </button>
+      <button class="tab-btn" data-tab="convert" onclick="switchTab('convert')" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Convert
+      </button>
+      <button class="tab-btn" data-tab="strip" onclick="switchTab('strip')" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Strip
+      </button>
+      <button class="tab-btn" data-tab="volume" onclick="switchTab('volume')" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"/></svg>
+        Volume
+      </button>
+    </nav>
+
+    <!-- ─── COMPRESS TAB ─── -->
+    <section class="tab-content active" id="tab-compress">
+      <div class="tool-header">
+        <h2>Compress for Meta</h2>
+        <span class="tool-badge">≤ 30 MB</span>
+      </div>
+      <div class="drop-zone" id="compressZone" onclick="document.getElementById('compressFile').click()">
+        <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <h4>Drop a video file here</h4>
+        <p>or click to browse &middot; MP4, MOV, WEBM, MKV</p>
+      </div>
+      <input type="file" id="compressFile" accept="video/*" style="display:none">
+      <div class="tool-progress" id="compressProgress">
+        <div class="progress-top"><span class="progress-label" id="compressLabel">Uploading...</span><span class="progress-pct" id="compressPct">0%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="compressBar"></div></div>
+        <div class="progress-result" id="compressResult"></div>
+      </div>
+    </section>
+
+    <!-- ─── RESIZE TAB ─── -->
+    <section class="tab-content" id="tab-resize">
+      <div class="tool-header">
+        <h2>Resize for Instagram</h2>
+        <span class="tool-badge">1080p</span>
+      </div>
+      <div class="chip-row">
+        <span class="chip-label">Preset</span>
+        <button class="chip active" data-preset="reels" onclick="pickPreset(this)">Reels 9:16</button>
+        <button class="chip" data-preset="portrait" onclick="pickPreset(this)">Portrait 4:5</button>
+        <button class="chip" data-preset="square" onclick="pickPreset(this)">Square 1:1</button>
+        <button class="chip" data-preset="landscape" onclick="pickPreset(this)">Landscape 1.91:1</button>
+      </div>
+      <div class="drop-zone" id="resizeZone" onclick="document.getElementById('resizeFile').click()">
+        <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M15 2v20M9 2v20M2 12h20"/></svg></div>
+        <h4>Drop a video to resize</h4>
+        <p>or click to browse &middot; Blurred background fill for any aspect ratio</p>
+      </div>
+      <input type="file" id="resizeFile" accept="video/*" style="display:none">
+      <div class="tool-progress" id="resizeProgress">
+        <div class="progress-top"><span class="progress-label" id="resizeLabel">Resizing...</span><span class="progress-pct" id="resizePct">0%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="resizeBar"></div></div>
+        <div class="progress-result" id="resizeResult"></div>
+      </div>
+    </section>
+
+    <!-- ─── CONVERT TAB ─── -->
+    <section class="tab-content" id="tab-convert">
+      <div class="tool-header">
+        <h2>Image Converter</h2>
+        <span class="tool-badge">HEIC → JPG</span>
+      </div>
+      <div class="chip-row">
+        <span class="chip-label">Output</span>
+        <button class="chip active" data-fmt="jpeg" onclick="pickFmt(this)">JPEG</button>
+        <button class="chip" data-fmt="png" onclick="pickFmt(this)">PNG</button>
+        <button class="chip" data-fmt="heic" onclick="pickFmt(this)">HEIC</button>
+        <button class="chip" data-fmt="tiff" onclick="pickFmt(this)">TIFF</button>
+        <button class="chip" data-fmt="gif" onclick="pickFmt(this)">GIF</button>
+        <button class="chip" data-fmt="bmp" onclick="pickFmt(this)">BMP</button>
+      </div>
+      <div class="drop-zone" id="convertZone" onclick="document.getElementById('convertFile').click()">
+        <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
+        <h4>Drop an image here</h4>
+        <p>or click to browse &middot; HEIC, PNG, JPG, WEBP, TIFF</p>
+      </div>
+      <input type="file" id="convertFile" accept="image/*,.heic,.heif" style="display:none">
+      <div class="tool-progress" id="convertProgress">
+        <div class="progress-top"><span class="progress-label" id="convertLabel">Converting...</span><span class="progress-pct" id="convertPct"></span></div>
+        <div class="bar-track"><div class="bar-fill" id="convertBar"></div></div>
+        <div class="progress-result" id="convertResult"></div>
+      </div>
+    </section>
+
+    <!-- ─── STRIP TAB ─── -->
+    <section class="tab-content" id="tab-strip">
+      <div class="tool-header">
+        <h2>Metadata Remover</h2>
+        <span class="tool-badge">EXIF · GPS</span>
+      </div>
+      <div class="drop-zone" id="stripZone" onclick="document.getElementById('stripFile').click()">
+        <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h4>Drop a file to strip metadata</h4>
+        <p>or click to browse &middot; Images &amp; videos</p>
+      </div>
+      <input type="file" id="stripFile" accept="image/*,video/*,.heic,.heif" style="display:none">
+      <div class="tool-progress" id="stripProgress">
+        <div class="progress-top"><span class="progress-label" id="stripLabel">Removing metadata...</span><span class="progress-pct" id="stripPct"></span></div>
+        <div class="bar-track"><div class="bar-fill" id="stripBar"></div></div>
+        <div class="progress-result" id="stripResult"></div>
+      </div>
+    </section>
+
+    <!-- ─── VOLUME TAB ─── -->
+    <section class="tab-content" id="tab-volume">
+      <div class="tool-header">
+        <h2>Volume Booster</h2>
+        <span class="tool-badge">-14 LUFS</span>
+      </div>
+      <div class="chip-row" id="volumeModeRow">
+        <span class="chip-label">Mode</span>
+        <button class="chip active" data-mode="normalize" onclick="pickVolumeMode(this)">Normalize</button>
+        <button class="chip" data-mode="vocal" onclick="pickVolumeMode(this)">Vocal Boost</button>
+      </div>
+      <div class="chip-row" id="volumeTargetRow">
+        <span class="chip-label">Target</span>
+        <button class="chip active" data-lufs="-14" onclick="pickLufs(this)">Social (-14)</button>
+        <button class="chip" data-lufs="-16" onclick="pickLufs(this)">Broadcast (-16)</button>
+        <button class="chip" data-lufs="-23" onclick="pickLufs(this)">EU Standard (-23)</button>
+      </div>
+      <div class="chip-row" id="vocalIntensityRow" style="display:none">
+        <span class="chip-label">Intensity</span>
+        <button class="chip" data-intensity="light" onclick="pickIntensity(this)">Light</button>
+        <button class="chip active" data-intensity="medium" onclick="pickIntensity(this)">Medium</button>
+        <button class="chip" data-intensity="heavy" onclick="pickIntensity(this)">Heavy</button>
+      </div>
+      <div class="drop-zone" id="volumeZone" onclick="document.getElementById('volumeFile').click()">
+        <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"/></svg></div>
+        <h4 id="volumeZoneTitle">Drop a video or audio file</h4>
+        <p id="volumeZoneDesc">or click to browse &middot; Analyze &amp; boost volume for ads</p>
+      </div>
+      <input type="file" id="volumeFile" accept="video/*,audio/*" style="display:none">
+      <div class="volume-card" id="volumeCard">
+        <div class="volume-stats">
+          <div class="volume-stat"><div class="vs-value" id="volLufs">&mdash;</div><div class="vs-label">Loudness (LUFS)</div></div>
+          <div class="volume-stat"><div class="vs-value" id="volPeak">&mdash;</div><div class="vs-label">True Peak (dBTP)</div></div>
+          <div class="volume-stat"><div class="vs-value" id="volRange">&mdash;</div><div class="vs-label">Range (LU)</div></div>
+        </div>
+        <div class="lufs-meter">
+          <div class="lufs-track">
+            <div class="lufs-target-line" id="lufsTargetLine"><span class="lufs-target-label" id="lufsTargetLbl">Target -14</span></div>
+            <div class="lufs-current-marker" id="lufsCurrentMarker"></div>
+          </div>
+          <div class="lufs-scale"><span>-60</span><span>-40</span><span>-20</span><span>0</span></div>
+        </div>
+        <div class="volume-verdict" id="volumeVerdict"></div>
+        <button class="normalize-btn" id="normalizeBtn" onclick="normalizeVolume()" disabled>Normalize</button>
+      </div>
+      <div class="tool-progress" id="volumeProgress">
+        <div class="progress-top"><span class="progress-label" id="volumeLabel">Analyzing...</span><span class="progress-pct" id="volumePct">0%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="volumeBar"></div></div>
+        <div class="progress-result" id="volumeResult"></div>
+      </div>
+      <div class="volume-compare" id="volumeCompare">
+        <div class="compare-header"><h4>A / B Compare</h4><span class="compare-tag" id="compareTag">MEDIUM</span></div>
+        <div class="compare-filename" id="compareFilename"></div>
+        <div class="compare-player">
+          <button class="compare-play-btn" id="comparePlayBtn" onclick="toggleComparePlay()">
+            <svg id="comparePlayIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            <svg id="comparePauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
+          </button>
+          <div class="compare-seek-wrap">
+            <input type="range" class="compare-seek" id="compareSeek" min="0" max="100" value="0" step="0.1" oninput="seekCompare(this.value)">
+            <span class="compare-time" id="compareTime">0:00 / 0:00</span>
+          </div>
+        </div>
+        <div class="compare-toggle-wrap">
+          <span class="compare-toggle-label active" id="compareLabelOrig" onclick="setCompareSource('original')">Original</span>
+          <label class="compare-toggle">
+            <input type="checkbox" id="compareToggle" checked onchange="toggleCompareSource()">
+            <span class="compare-toggle-slider"></span>
+          </label>
+          <span class="compare-toggle-label" id="compareLabelProc" onclick="setCompareSource('processed')">Vocal Boost</span>
+        </div>
+        <audio id="compareOriginal" preload="auto"></audio>
+        <audio id="compareProcessed" preload="auto"></audio>
+        <div class="chip-row" id="compareIntensityRow">
+          <span class="chip-label">Intensity</span>
+          <button class="chip" data-intensity="light" onclick="pickCompareIntensity(this)">Light</button>
+          <button class="chip active" data-intensity="medium" onclick="pickCompareIntensity(this)">Medium</button>
+          <button class="chip" data-intensity="heavy" onclick="pickCompareIntensity(this)">Heavy</button>
+        </div>
+        <div class="compare-actions">
+          <button class="reprocess-btn" id="reprocessBtn" onclick="reprocessVocal()">Re-process with new intensity</button>
+          <a class="normalize-btn" id="compareDownloadBtn" style="text-decoration:none;flex:1" download>Download</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── DOWNLOADS DROPDOWN ─── -->
+    <div class="downloads-section" id="downloadsSection">
+      <div class="downloads-toggle" onclick="toggleDownloads()" role="button" tabindex="0">
+        <span class="dt-left">
+          <span class="dl-count-badge" id="dlCountBadge">0</span>
+          Recent Downloads
+        </span>
+        <span class="dt-right">
+          <span class="dt-actions" onclick="event.stopPropagation()">
+            <button onclick="event.stopPropagation(); openDownloads()">Open folder</button>
+          </span>
+          <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </div>
+      <div class="downloads-list-wrap">
+        <div class="downloads-list" id="downloadsList"></div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-inner">Made for creators who move fast.</div>
+    </footer>
+  </div>
+
+  <div class="toast-container" id="toasts"></div>
 
   <script>
-    let selectedFormat = null;
-    let audioOnly = false;
-    let tikwmData = null;
-    let carouselData = null;
-    let selectedItemIndex = 0;
-    let igMediaData = null;
+    // ─── THEME ───
+    (function initTheme() {
+      try {
+        const saved = localStorage.getItem('vidsave-theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+      } catch {}
+      updateThemeIcon();
+    })();
+
+    function toggleTheme() {
+      const root = document.documentElement;
+      const current = root.getAttribute('data-theme');
+      const isDark = current === 'dark' || (!current && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const next = isDark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('vidsave-theme', next); } catch {}
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const root = document.documentElement;
+      const theme = root.getAttribute('data-theme');
+      const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.getElementById('themeIcon').innerHTML = isDark
+        ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+        : '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+    }
+
+    // ─── TABS (sliding indicator) ───
+    const TABS = ['compress', 'resize', 'convert', 'strip', 'volume'];
+    let currentTab = 'compress';
+
+    function switchTab(name) {
+      currentTab = name;
+      TABS.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.classList.toggle('active', t === name);
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === name);
+      });
+      positionSlider();
+    }
+
+    function positionSlider() {
+      const bar = document.getElementById('tabBar');
+      const active = bar.querySelector('.tab-btn.active');
+      const slider = document.getElementById('tabSlider');
+      if (!active || !slider) return;
+      const barRect = bar.getBoundingClientRect();
+      const btnRect = active.getBoundingClientRect();
+      slider.style.width = btnRect.width + 'px';
+      slider.style.transform = 'translateX(' + (btnRect.left - barRect.left - 4) + 'px)';
+    }
+
+    window.addEventListener('resize', positionSlider);
+    requestAnimationFrame(positionSlider);
+
+    // ─── URL INPUT GLOW ───
     const urlInput = document.getElementById('urlInput');
+    const urlOuter = document.getElementById('urlOuter');
+    const clearBtn = document.getElementById('clearBtn');
 
-    urlInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') fetchInfo();
+    urlInput.addEventListener('focus', () => urlOuter.classList.add('focused'));
+    urlInput.addEventListener('blur', () => urlOuter.classList.remove('focused'));
+    urlInput.addEventListener('input', () => { clearBtn.style.display = urlInput.value.trim() ? 'flex' : 'none'; });
+    urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchInfo(); });
+
+    // ─── PASTE-AND-GO (auto-fetch on paste) ───
+    urlInput.addEventListener('paste', () => {
+      urlOuter.classList.add('paste-flash');
+      setTimeout(() => urlOuter.classList.remove('paste-flash'), 600);
+      setTimeout(() => {
+        clearBtn.style.display = urlInput.value.trim() ? 'flex' : 'none';
+        if (urlInput.value.trim()) fetchInfo();
+      }, 50);
     });
 
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setTimeout(() => urlInput.focus(), 400);
-    }
+    // ─── RETURNING USER ───
+    (function checkReturning() {
+      try {
+        const visits = parseInt(localStorage.getItem('vidsave-visits') || '0', 10);
+        if (visits > 0) urlInput.placeholder = 'Welcome back — paste another link';
+        localStorage.setItem('vidsave-visits', String(visits + 1));
+      } catch {}
+    })();
 
-    function clearUrlInput() {
-      urlInput.value = '';
-      document.getElementById('clearInput').style.display = 'none';
-      urlInput.focus();
-    }
+    function clearUrl() { urlInput.value = ''; clearBtn.style.display = 'none'; urlInput.focus(); }
 
-    urlInput.addEventListener('input', () => {
-      document.getElementById('clearInput').style.display = urlInput.value.trim() ? 'flex' : 'none';
+    // ─── SCROLL HEADER MORPH ───
+    window.addEventListener('scroll', () => {
+      document.querySelector('header').classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    // ─── RIPPLE EFFECT ───
+    document.addEventListener('click', (e) => {
+      const host = e.target.closest('.ripple-host');
+      if (!host || host.disabled) return;
+      const r = document.createElement('span');
+      r.className = 'ripple';
+      const d = Math.max(host.offsetWidth, host.offsetHeight);
+      const rect = host.getBoundingClientRect();
+      r.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - rect.left - d/2) + 'px;top:' + (e.clientY - rect.top - d/2) + 'px';
+      host.appendChild(r);
+      r.addEventListener('animationend', () => r.remove());
     });
 
-    function showError(msg) {
-      document.getElementById('errorText').textContent = msg;
-      document.getElementById('errorMsg').classList.add('visible');
-      setTimeout(() => document.getElementById('errorMsg').classList.remove('visible'), 5000);
+    // ─── STAGGER REVEAL (IntersectionObserver) ───
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const siblings = [...e.target.parentElement.children].filter(c => c.classList.contains('reveal'));
+          const idx = siblings.indexOf(e.target);
+          setTimeout(() => e.target.classList.add('visible'), idx * 60);
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    // ─── CONFETTI SPAWNER ───
+    function spawnConfetti(x, y) {
+      const colors = ['#C8E619', '#E2FE00', '#9AE600', '#16A34A', '#FFD700', '#FF6B6B'];
+      for (let i = 0; i < 12; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'confetti-dot';
+        const angle = (i / 12) * Math.PI * 2;
+        const dist = 25 + Math.random() * 35;
+        dot.style.cssText = 'left:' + x + 'px;top:' + y + 'px;background:' + colors[i % colors.length] +
+          ';--tx:' + Math.cos(angle) * dist + 'px;--ty:' + (Math.sin(angle) * dist - 20) + 'px;--rot:' + (Math.random() * 360) + 'deg' +
+          ';animation-delay:' + (Math.random() * 0.1) + 's';
+        document.body.appendChild(dot);
+        dot.addEventListener('animationend', () => dot.remove());
+      }
     }
+
+    // ─── DOWNLOAD COUNTER ANIMATION ───
+    function animateCounter(target) {
+      const el = document.getElementById('dlCounter');
+      if (!el) return;
+      const start = parseInt(el.textContent.replace(/,/g, ''), 10) || 0;
+      if (start === target) return;
+      const duration = 1200;
+      const startTime = performance.now();
+      function tick(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(start + (target - start) * eased);
+        el.textContent = current.toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ─── TOASTS ───
+    function showToast(msg, type) {
+      type = type || 'error';
+      const container = document.getElementById('toasts');
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.innerHTML = '<div class="toast-stripe"></div><span class="toast-msg">' + escapeHtml(msg) + '</span><button class="toast-close" onclick="dismissToast(this)">&times;</button>';
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('visible'));
+      setTimeout(() => dismissToast(toast.querySelector('.toast-close')), type === 'error' ? 8000 : 5000);
+    }
+
+    function dismissToast(btn) {
+      const toast = btn.closest ? btn.closest('.toast') : btn.parentElement;
+      if (!toast) return;
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 250);
+    }
+
+    // ─── UTILS ───
+    function escapeHtml(str) { const el = document.createElement('span'); el.textContent = str; return el.innerHTML; }
 
     function formatDuration(sec) {
       if (!sec) return '';
@@ -1499,232 +1952,196 @@
 
     function timeAgo(dateStr) {
       const d = new Date(dateStr);
-      const now = new Date();
-      const diff = Math.floor((now - d) / 86400000);
+      const diff = Math.floor((new Date() - d) / 86400000);
       if (diff === 0) return 'Today';
       if (diff === 1) return 'Yesterday';
       return diff + 'd ago';
     }
 
+    function fmtTime(sec) { return Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0'); }
+
+    function detectPlatform(url) {
+      if (/youtube\.com|youtu\.be/i.test(url)) return 'YouTube';
+      if (/instagram\.com/i.test(url)) return 'Instagram';
+      if (/tiktok\.com/i.test(url)) return 'TikTok';
+      if (/facebook\.com|fb\.watch/i.test(url)) return 'Facebook';
+      return '';
+    }
+
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => urlInput.focus(), 300); }
+
+    // ─── DOWNLOAD STATE ───
+    let selectedFormat = null;
+    let audioOnly = false;
+    let tikwmData = null;
+    let carouselData = null;
+    let selectedItemIndex = 0;
+    let igMediaData = null;
+
+    // ─── FETCH INFO ───
     async function fetchInfo() {
       const url = urlInput.value.trim();
       if (!url) return;
       const btn = document.getElementById('fetchBtn');
       btn.disabled = true;
-      btn.textContent = 'Fetching...';
-      document.getElementById('successMsg').classList.remove('visible');
+      btn.textContent = 'Looking it up...';
       selectedFormat = null;
       audioOnly = false;
       tikwmData = null;
       igMediaData = null;
 
       try {
-        const res = await fetch('/api/info', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        });
+        const res = await fetch('/api/info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         if (data._tikwm) tikwmData = data._tikwm;
         if (data.downloadUrl) igMediaData = { downloadUrl: data.downloadUrl, isImage: data.isImage !== false };
 
-        if (data.isCarousel) {
-          carouselData = data;
-          showCarousel(data);
-          return;
-        }
+        if (data.isCarousel) { carouselData = data; showCarousel(data); return; }
         carouselData = null;
-        document.getElementById('carouselStrip').style.display = 'none';
-        document.getElementById('qualityLabel').style.display = '';
-
-        const thumbImg = document.getElementById('liveThumb');
-        if (data.thumbnail) {
-          thumbImg.src = data.thumbnail;
-          thumbImg.style.display = 'block';
-          document.getElementById('livePlayIcon').style.display = 'none';
-        }
-        document.getElementById('liveDuration').textContent = formatDuration(data.duration);
-        document.getElementById('liveTitle').textContent = data.title;
-        document.getElementById('liveChannel').textContent = data.uploader;
-
-        const fmts = document.getElementById('liveFormats');
-        fmts.innerHTML = '';
-
-        data.videoFormats.forEach((f, i) => {
-          const div = document.createElement('div');
-          div.className = 'mock-format' + (i === 0 ? ' active' : '');
-          div.innerHTML = '<div><span class="mf-dot"></span>' + qualityLabel(f.height) + ' ' + f.ext.toUpperCase() + '</div><span class="mf-right">' + formatBytes(f.filesize) + '</span>';
-          div.style.cursor = 'pointer';
-          div.onclick = () => {
-            fmts.querySelectorAll('.mock-format').forEach(el => el.classList.remove('active'));
-            div.classList.add('active');
-            selectedFormat = f.format_id;
-            audioOnly = false;
-            if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false };
-          };
-          fmts.appendChild(div);
-          if (i === 0) {
-            selectedFormat = f.format_id; audioOnly = false;
-            if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false };
-          }
-        });
-
-        if (data.audioFormats.length > 0) {
-          const mp3 = document.createElement('div');
-          mp3.className = 'mock-format';
-          mp3.innerHTML = '<div><span class="mf-dot"></span>MP3 Audio</div><span class="mf-right">Audio</span>';
-          mp3.style.cursor = 'pointer';
-          mp3.onclick = () => {
-            fmts.querySelectorAll('.mock-format').forEach(el => el.classList.remove('active'));
-            mp3.classList.add('active');
-            selectedFormat = null;
-            audioOnly = true;
-          };
-          fmts.appendChild(mp3);
-        }
-
-        document.getElementById('browserPlaceholder').style.display = 'none';
-        document.getElementById('browserLive').style.display = 'block';
-        document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1)';
-
-      } catch (e) {
-        showError(e.message || 'Failed to fetch video info');
-      } finally {
+        showPreview(data, url);
+      } catch (e) { showToast(e.message || 'Failed to fetch video info', 'error'); } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Download <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        btn.innerHTML = 'Grab it <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
       }
     }
 
-    function showCarousel(data) {
-      document.getElementById('liveTitle').textContent = data.title;
-      document.getElementById('liveChannel').textContent = data.uploader;
+    function showPreview(data, url) {
+      const card = document.getElementById('previewCard');
+      const img = document.getElementById('previewImg');
+      if (data.thumbnail) { img.src = data.thumbnail; img.style.display = 'block'; } else { img.style.display = 'none'; }
+      document.getElementById('previewDuration').textContent = formatDuration(data.duration);
+      document.getElementById('previewTitle').textContent = data.title || 'Untitled';
+      document.getElementById('previewChannel').textContent = data.uploader || '';
+      document.getElementById('previewPlatform').textContent = detectPlatform(url || urlInput.value);
+      document.getElementById('carouselStrip').classList.remove('visible');
 
+      const fmts = document.getElementById('formatsList');
+      const fmtsSection = document.getElementById('formatsSection');
+      fmts.innerHTML = '';
+
+      if (data.videoFormats && data.videoFormats.length > 0) {
+        fmtsSection.style.display = '';
+        data.videoFormats.forEach((f, i) => {
+          const div = document.createElement('div');
+          div.className = 'format-option' + (i === 0 ? ' active' : '');
+          div.innerHTML = '<div class="fo-left"><span class="format-dot"></span>' + qualityLabel(f.height) + ' ' + f.ext.toUpperCase() + '</div><span class="format-size">' + formatBytes(f.filesize) + '</span>';
+          div.style.cursor = 'pointer';
+          div.onclick = () => {
+            fmts.querySelectorAll('.format-option').forEach(el => el.classList.remove('active'));
+            div.classList.add('active');
+            selectedFormat = f.format_id; audioOnly = false;
+            if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false };
+          };
+          fmts.appendChild(div);
+          if (i === 0) { selectedFormat = f.format_id; audioOnly = false; if (f.downloadUrl) igMediaData = { downloadUrl: f.downloadUrl, isImage: false }; }
+        });
+        if (data.audioFormats && data.audioFormats.length > 0) {
+          const mp3 = document.createElement('div');
+          mp3.className = 'format-option';
+          mp3.innerHTML = '<div class="fo-left"><span class="format-dot"></span>MP3 Audio</div><span class="format-size">Audio</span>';
+          mp3.style.cursor = 'pointer';
+          mp3.onclick = () => { fmts.querySelectorAll('.format-option').forEach(el => el.classList.remove('active')); mp3.classList.add('active'); selectedFormat = null; audioOnly = true; };
+          fmts.appendChild(mp3);
+        }
+      } else { fmtsSection.style.display = 'none'; }
+      card.classList.add('visible');
+    }
+
+    function showCarousel(data) {
+      document.getElementById('previewTitle').textContent = data.title;
+      document.getElementById('previewChannel').textContent = data.uploader;
+      document.getElementById('previewPlatform').textContent = 'Instagram';
       const strip = document.getElementById('carouselStrip');
       strip.innerHTML = '';
       data.items.forEach((item, i) => {
         const div = document.createElement('div');
         div.className = 'carousel-thumb' + (i === 0 ? ' selected' : '');
-        if (item.thumbnail) {
-          div.innerHTML = '<img src="' + item.thumbnail + '" alt="">';
-        }
-        if (item.isVideo) {
-          div.innerHTML += '<span class="carousel-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg></span>';
-        }
+        if (item.thumbnail) div.innerHTML = '<img src="' + item.thumbnail + '" alt="">';
+        if (item.isVideo) div.innerHTML += '<span class="carousel-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><polygon points="9,5 19,12 9,19" fill="#fff"/></svg></span>';
         div.onclick = () => selectCarouselItem(i);
         strip.appendChild(div);
       });
-      strip.style.display = 'flex';
-
+      strip.classList.add('visible');
       selectCarouselItem(0);
-
-      document.getElementById('browserPlaceholder').style.display = 'none';
-      document.getElementById('browserLive').style.display = 'block';
-      document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.1)';
+      document.getElementById('previewCard').classList.add('visible');
     }
 
     function selectCarouselItem(index) {
       selectedItemIndex = index;
       const item = carouselData.items[index];
-
-      document.getElementById('carouselStrip').querySelectorAll('.carousel-thumb').forEach((el, i) => {
-        el.classList.toggle('selected', i === index);
-      });
-
-      const thumbImg = document.getElementById('liveThumb');
-      if (item.thumbnail) {
-        thumbImg.src = item.thumbnail;
-        thumbImg.style.display = 'block';
-      }
-      document.getElementById('livePlayIcon').style.display = item.isVideo ? '' : 'none';
-      document.getElementById('liveDuration').textContent = item.isVideo ? formatDuration(item.duration) : '';
-
-      const fmts = document.getElementById('liveFormats');
-      const qlabel = document.getElementById('qualityLabel');
-      fmts.innerHTML = '';
-      selectedFormat = null;
-      audioOnly = false;
-
-      if (item.isVideo && item.videoFormats.length > 0) {
-        qlabel.style.display = '';
+      document.getElementById('carouselStrip').querySelectorAll('.carousel-thumb').forEach((el, i) => el.classList.toggle('selected', i === index));
+      const img = document.getElementById('previewImg');
+      if (item.thumbnail) { img.src = item.thumbnail; img.style.display = 'block'; }
+      document.getElementById('previewDuration').textContent = item.isVideo ? formatDuration(item.duration) : '';
+      const fmts = document.getElementById('formatsList');
+      const fmtsSection = document.getElementById('formatsSection');
+      fmts.innerHTML = ''; selectedFormat = null; audioOnly = false;
+      if (item.isVideo && item.videoFormats && item.videoFormats.length > 0) {
+        fmtsSection.style.display = '';
         item.videoFormats.forEach((f, i) => {
           const div = document.createElement('div');
-          div.className = 'mock-format' + (i === 0 ? ' active' : '');
-          div.innerHTML = '<div><span class="mf-dot"></span>' + qualityLabel(f.height) + ' ' + f.ext.toUpperCase() + '</div><span class="mf-right">' + formatBytes(f.filesize) + '</span>';
+          div.className = 'format-option' + (i === 0 ? ' active' : '');
+          div.innerHTML = '<div class="fo-left"><span class="format-dot"></span>' + qualityLabel(f.height) + ' ' + f.ext.toUpperCase() + '</div><span class="format-size">' + formatBytes(f.filesize) + '</span>';
           div.style.cursor = 'pointer';
-          div.onclick = () => {
-            fmts.querySelectorAll('.mock-format').forEach(el => el.classList.remove('active'));
-            div.classList.add('active');
-            selectedFormat = f.format_id;
-            audioOnly = false;
-            if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl;
-          };
+          div.onclick = () => { fmts.querySelectorAll('.format-option').forEach(el => el.classList.remove('active')); div.classList.add('active'); selectedFormat = f.format_id; audioOnly = false; if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl; };
           fmts.appendChild(div);
-          if (i === 0) {
-            selectedFormat = f.format_id;
-            if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl;
-          }
+          if (i === 0) { selectedFormat = f.format_id; if (f.downloadUrl) carouselData.items[selectedItemIndex].downloadUrl = f.downloadUrl; }
         });
-      } else {
-        qlabel.style.display = 'none';
-      }
+      } else { fmtsSection.style.display = 'none'; }
     }
 
+    // ─── START DOWNLOAD ───
     async function startDownload() {
       const url = urlInput.value.trim();
       if (!url) return;
-      const btn = document.getElementById('liveDlBtn');
-      btn.disabled = true;
-      btn.textContent = 'Starting...';
-      const ps = document.getElementById('progressSection');
-      ps.classList.add('visible');
-      document.getElementById('successMsg').classList.remove('visible');
-      document.getElementById('progressBar').style.width = '0%';
-      document.getElementById('progressPct').textContent = '0%';
-      document.getElementById('progressLabel').textContent = 'Starting...';
-
+      const btn = document.getElementById('startDlBtn');
+      btn.disabled = true; btn.textContent = 'Starting...';
+      const pw = document.getElementById('dlProgress');
+      pw.classList.add('visible');
+      document.getElementById('dlProgressBar').style.width = '0%';
+      document.getElementById('dlProgressPct').textContent = '0%';
+      document.getElementById('dlProgressLabel').textContent = 'Starting...';
       try {
-        const res = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign(
-            { url, formatId: selectedFormat, audioOnly, _tikwm: tikwmData, title: document.getElementById('liveTitle').textContent || '' },
-            carouselData ? { playlistItem: carouselData.items[selectedItemIndex].index, isImage: !carouselData.items[selectedItemIndex].isVideo, instagramUrl: carouselData.items[selectedItemIndex].downloadUrl } : {},
-            igMediaData ? { instagramUrl: igMediaData.downloadUrl, isImage: igMediaData.isImage } : {}
-          )),
-        });
+        const body = { url, formatId: selectedFormat, audioOnly, _tikwm: tikwmData, title: document.getElementById('previewTitle').textContent || '' };
+        if (carouselData) { body.playlistItem = carouselData.items[selectedItemIndex].index; body.isImage = !carouselData.items[selectedItemIndex].isVideo; body.instagramUrl = carouselData.items[selectedItemIndex].downloadUrl; }
+        if (igMediaData) { body.instagramUrl = igMediaData.downloadUrl; body.isImage = igMediaData.isImage; }
+        const res = await fetch('/api/download', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        pollProgress(data.id);
+        pollDlProgress(data.id);
       } catch (e) {
-        showError(e.message || 'Download failed');
+        showToast(e.message || 'Download failed', 'error');
         btn.disabled = false;
         btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
-        ps.classList.remove('visible');
+        pw.classList.remove('visible');
       }
     }
 
-    function pollProgress(id) {
+    function pollDlProgress(id) {
       const iv = setInterval(async () => {
         try {
           const res = await fetch('/api/progress/' + id);
           const d = await res.json();
-          document.getElementById('progressBar').style.width = d.progress + '%';
-          document.getElementById('progressPct').textContent = Math.round(d.progress) + '%';
-          if (d.filename) document.getElementById('progressLabel').textContent = d.filename;
+          document.getElementById('dlProgressBar').style.width = d.progress + '%';
+          document.getElementById('dlProgressPct').textContent = Math.round(d.progress) + '%';
+          if (d.filename) document.getElementById('dlProgressLabel').textContent = d.filename;
+          const btn = document.getElementById('startDlBtn');
+          if (d.progress > 0 && d.status === 'downloading') btn.textContent = d.progress >= 99 ? 'Almost there...' : 'Grabbing your video...';
           if (d.status === 'complete') {
             clearInterval(iv);
-            document.getElementById('progressSection').classList.remove('visible');
-            document.getElementById('successMsg').classList.add('visible');
-            const btn = document.getElementById('liveDlBtn');
+            const progressEl = document.getElementById('dlProgress');
+            const rect = progressEl.getBoundingClientRect();
+            spawnConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            progressEl.classList.remove('visible');
+            showToast('Grabbed! Ready in your downloads.', 'success');
             btn.disabled = false;
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
             loadDownloads();
           } else if (d.status === 'error') {
             clearInterval(iv);
-            document.getElementById('progressSection').classList.remove('visible');
-            showError(d.error || 'Download failed');
-            const btn = document.getElementById('liveDlBtn');
+            document.getElementById('dlProgress').classList.remove('visible');
+            showToast(d.error || 'Download failed — try a different format', 'error');
             btn.disabled = false;
             btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download';
           }
@@ -1732,148 +2149,24 @@
       }, 500);
     }
 
-    function escapeHtml(str) {
-      const el = document.createElement('span');
-      el.textContent = str;
-      return el.innerHTML;
-    }
-
-    async function loadDownloads() {
-      try {
-        const res = await fetch('/api/downloads');
-        const files = await res.json();
-        const list = document.getElementById('downloadsList');
-        list.innerHTML = '';
-        if (files.length === 0) { document.getElementById('downloadsSection').style.display = 'none'; return; }
-        document.getElementById('downloadsSection').style.display = 'block';
-        const videoExts = new Set(['MP4', 'WEBM', 'MKV', 'MOV', 'AVI']);
-        files.slice(0, 8).forEach(f => {
-          const ext = f.name.split('.').pop().toUpperCase();
-          const safe = escapeHtml(f.name);
-          const isVideo = videoExts.has(ext);
-          const isCompressed = f.name.includes('_shrunk.') || /_\d+mb\./.test(f.name);
-          const isOver30 = f.size > 30 * 1024 * 1024;
-          const d = document.createElement('div');
-          d.className = 'download-item';
-          let buttons = '';
-          if (isVideo && !isCompressed) {
-            if (isOver30) {
-              buttons += '<button class="shrink-btn meta-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this, 30)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Meta 30MB</button>';
-            }
-            buttons += '<button class="shrink-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14l6-6m4 0h4v4m-14 4H0v-4"/><path d="M20 10l-6 6m-4 0H6v-4m14-4h0v4"/></svg>Shrink</button>';
-          }
-          d.innerHTML = '<div class="dl-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>'
-            + '<div class="dl-info"><div class="dl-name" title="' + safe + '">' + safe + '</div>'
-            + '<div class="dl-meta">' + ext + ' &middot; ' + formatBytes(f.size) + '</div></div>'
-            + buttons
-            + '<span class="dl-date">' + timeAgo(f.date) + '</span>';
-          list.appendChild(d);
-        });
-      } catch {}
-    }
-
-    function clearDownloads() {
-      document.getElementById('downloadsList').innerHTML = '';
-      document.getElementById('downloadsSection').style.display = 'none';
-    }
-
-    function resetForNew() {
-      urlInput.value = '';
-      document.getElementById('clearInput').style.display = 'none';
-      selectedFormat = null;
-      audioOnly = false;
-      tikwmData = null;
-      carouselData = null;
-      selectedItemIndex = 0;
-      igMediaData = null;
-      document.getElementById('carouselStrip').style.display = 'none';
-      document.getElementById('carouselStrip').innerHTML = '';
-      document.getElementById('qualityLabel').style.display = '';
-      document.getElementById('browserPlaceholder').style.display = 'block';
-      document.getElementById('browserLive').style.display = 'none';
-      document.getElementById('browserPreview').style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.06)';
-      document.getElementById('successMsg').classList.remove('visible');
-      document.getElementById('progressSection').classList.remove('visible');
-      document.getElementById('errorMsg').classList.remove('visible');
-      const thumbImg = document.getElementById('liveThumb');
-      thumbImg.src = '';
-      thumbImg.style.display = 'none';
-      document.getElementById('livePlayIcon').style.display = '';
+    function resetPreview() {
+      urlInput.value = ''; clearBtn.style.display = 'none';
+      selectedFormat = null; audioOnly = false; tikwmData = null; carouselData = null; selectedItemIndex = 0; igMediaData = null;
+      document.getElementById('previewCard').classList.remove('visible');
+      document.getElementById('dlProgress').classList.remove('visible');
+      document.getElementById('previewImg').src = '';
+      document.getElementById('previewImg').style.display = 'none';
+      document.getElementById('carouselStrip').classList.remove('visible');
       urlInput.focus();
     }
 
-    async function shrinkFile(filename, btn, targetMB) {
-      btn.disabled = true;
-      btn.textContent = 'Starting...';
-      const item = btn.closest('.download-item');
-      try {
-        const body = { filename };
-        if (targetMB) body.targetMB = targetMB;
-        const res = await fetch('/api/shrink', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-
-        const prog = document.createElement('div');
-        prog.className = 'shrink-progress';
-        prog.id = 'shrink-' + data.id;
-        prog.innerHTML = '<div class="shrink-progress-top"><span class="shrink-progress-label">Shrinking...</span><span class="shrink-progress-pct">0%</span></div><div class="shrink-bar-track"><div class="shrink-bar-fill"></div></div><div class="shrink-result"></div>';
-        item.after(prog);
-        btn.style.display = 'none';
-
-        pollShrink(data.id, prog, btn);
-      } catch (e) {
-        showError(e.message || 'Shrink failed');
-        btn.disabled = false;
-        btn.textContent = 'Shrink';
-      }
-    }
-
-    function pollShrink(id, prog, btn) {
-      const iv = setInterval(async () => {
-        try {
-          const res = await fetch('/api/shrink-progress/' + id);
-          const d = await res.json();
-          prog.querySelector('.shrink-bar-fill').style.width = d.progress + '%';
-          prog.querySelector('.shrink-progress-pct').textContent = Math.round(d.progress) + '%';
-          if (d.status === 'complete') {
-            clearInterval(iv);
-            prog.querySelector('.shrink-progress-label').textContent = d.filename;
-            const saved = d.originalSize - d.newSize;
-            const pctSaved = Math.round((saved / d.originalSize) * 100);
-            prog.querySelector('.shrink-result').innerHTML = formatBytes(d.originalSize) + ' &rarr; ' + formatBytes(d.newSize) + ' &mdash; <strong>' + pctSaved + '% smaller</strong>';
-            setTimeout(() => { prog.remove(); loadDownloads(); }, 4000);
-          } else if (d.status === 'error') {
-            clearInterval(iv);
-            showError(d.error || 'Shrink failed');
-            prog.remove();
-            btn.style.display = '';
-            btn.disabled = false;
-            btn.textContent = 'Shrink';
-          }
-        } catch { clearInterval(iv); }
-      }, 500);
-    }
-
-    // ─── COMPRESS FOR META ───
-    const dropZone = document.getElementById('dropZone');
-    const fileUpload = document.getElementById('fileUpload');
-
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (file) uploadAndCompress(file);
-    });
-    fileUpload.addEventListener('change', () => {
-      if (fileUpload.files[0]) uploadAndCompress(fileUpload.files[0]);
-      fileUpload.value = '';
-    });
+    // ─── COMPRESS ───
+    const compressZone = document.getElementById('compressZone');
+    const compressFileInput = document.getElementById('compressFile');
+    compressZone.addEventListener('dragover', (e) => { e.preventDefault(); compressZone.classList.add('drag-over'); });
+    compressZone.addEventListener('dragleave', () => compressZone.classList.remove('drag-over'));
+    compressZone.addEventListener('drop', (e) => { e.preventDefault(); compressZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) uploadAndCompress(e.dataTransfer.files[0]); });
+    compressFileInput.addEventListener('change', () => { if (compressFileInput.files[0]) uploadAndCompress(compressFileInput.files[0]); compressFileInput.value = ''; });
 
     async function uploadAndCompress(file) {
       const prog = document.getElementById('compressProgress');
@@ -1881,98 +2174,71 @@
       const pct = document.getElementById('compressPct');
       const bar = document.getElementById('compressBar');
       const result = document.getElementById('compressResult');
-
-      prog.classList.add('visible');
-      label.textContent = 'Uploading ' + file.name + '...';
-      pct.textContent = '0%';
-      bar.style.width = '0%';
-      result.innerHTML = '';
-
+      prog.classList.add('visible'); label.textContent = 'Uploading ' + file.name + '...'; pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const uploadRes = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/api/upload');
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              const p = Math.round((e.loaded / e.total) * 100);
-              pct.textContent = p + '%';
-              bar.style.width = p + '%';
-            }
-          };
-          xhr.onload = () => {
-            if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
-            else reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed'));
-          };
-          xhr.onerror = () => reject(new Error('Upload failed'));
-          xhr.send(formData);
-        });
-
-        label.textContent = 'Compressing to 30MB...';
-        pct.textContent = '0%';
-        bar.style.width = '0%';
-
-        const shrinkRes = await fetch('/api/shrink', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: uploadRes.filename, targetMB: 30 }),
-        });
+        const formData = new FormData(); formData.append('file', file);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = p + '%'; bar.style.width = p + '%'; });
+        label.textContent = 'Crushing it down to ≤30 MB...'; pct.textContent = '0%'; bar.style.width = '0%';
+        const shrinkRes = await fetch('/api/shrink', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: uploadRes.filename, targetMB: 30 }) });
         const shrinkData = await shrinkRes.json();
         if (!shrinkRes.ok) throw new Error(shrinkData.error);
-
-        const iv = setInterval(async () => {
-          try {
-            const res = await fetch('/api/shrink-progress/' + shrinkData.id);
-            const d = await res.json();
-            bar.style.width = d.progress + '%';
-            pct.textContent = Math.round(d.progress) + '%';
-            if (d.filename) label.textContent = 'Compressing ' + d.filename + '...';
-            if (d.status === 'complete') {
-              clearInterval(iv);
-              label.textContent = d.filename;
-              const saved = d.originalSize - d.newSize;
-              const pctSaved = Math.round((saved / d.originalSize) * 100);
-              result.innerHTML = formatBytes(d.originalSize) + ' &rarr; ' + formatBytes(d.newSize) + ' &mdash; <strong>' + pctSaved + '% smaller</strong>';
-              loadDownloads();
-            } else if (d.status === 'error') {
-              clearInterval(iv);
-              showError(d.error || 'Compression failed');
-              prog.classList.remove('visible');
-            }
-          } catch { clearInterval(iv); }
-        }, 500);
-      } catch (e) {
-        showError(e.message || 'Upload failed');
-        prog.classList.remove('visible');
-      }
+        pollTool('/api/shrink-progress/' + shrinkData.id, label, pct, bar, result, () => loadDownloads());
+      } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
     }
 
-    // ─── IMAGE CONVERTER ───
+    // ─── RESIZE ───
+    let resizePreset = 'reels';
+    function pickPreset(btn) { document.querySelectorAll('#tab-resize .chip').forEach(el => el.classList.remove('active')); btn.classList.add('active'); resizePreset = btn.dataset.preset; }
+
+    const resizeZone = document.getElementById('resizeZone');
+    const resizeFileInput = document.getElementById('resizeFile');
+    resizeZone.addEventListener('dragover', (e) => { e.preventDefault(); resizeZone.classList.add('drag-over'); });
+    resizeZone.addEventListener('dragleave', () => resizeZone.classList.remove('drag-over'));
+    resizeZone.addEventListener('drop', (e) => { e.preventDefault(); resizeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) uploadAndResize(e.dataTransfer.files[0]); });
+    resizeFileInput.addEventListener('change', () => { if (resizeFileInput.files[0]) uploadAndResize(resizeFileInput.files[0]); resizeFileInput.value = ''; });
+
+    async function uploadAndResize(file) {
+      const prog = document.getElementById('resizeProgress');
+      const label = document.getElementById('resizeLabel');
+      const pct = document.getElementById('resizePct');
+      const bar = document.getElementById('resizeBar');
+      const result = document.getElementById('resizeResult');
+      prog.classList.add('visible'); label.textContent = 'Uploading ' + file.name + '...'; pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+      try {
+        const formData = new FormData(); formData.append('file', file);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { const v = Math.round(p * 0.3); pct.textContent = v + '%'; bar.style.width = v + '%'; });
+        label.textContent = 'Resizing to ' + resizePreset + '...'; bar.style.width = '30%';
+        const resRes = await fetch('/api/resize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: uploadRes.filename, preset: resizePreset }) });
+        const resData = await resRes.json();
+        if (!resRes.ok) throw new Error(resData.error);
+        pollResize(resData.id, prog, label, pct, bar, result);
+      } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    function pollResize(id, prog, label, pct, bar, result) {
+      const iv = setInterval(async () => {
+        try {
+          const res = await fetch('/api/resize-progress/' + id);
+          const d = await res.json();
+          const overall = 30 + Math.round(d.progress * 0.7);
+          bar.style.width = overall + '%'; pct.textContent = overall + '%';
+          if (d.filename) label.textContent = 'Resizing ' + d.filename + '...';
+          if (d.status === 'complete') { clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%'; label.textContent = d.filename; result.innerHTML = '<strong>Resized for Instagram</strong>'; loadDownloads(); }
+          else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Resize failed', 'error'); prog.classList.remove('visible'); }
+        } catch { clearInterval(iv); }
+      }, 500);
+    }
+
+    // ─── CONVERT ───
     let convertFormat = 'jpeg';
+    function pickFmt(btn) { document.querySelectorAll('#tab-convert .chip').forEach(el => el.classList.remove('active')); btn.classList.add('active'); convertFormat = btn.dataset.fmt; }
 
-    function pickFormat(btn) {
-      document.querySelectorAll('#formatPicker .format-chip').forEach(el => el.classList.remove('active'));
-      btn.classList.add('active');
-      convertFormat = btn.dataset.fmt;
-    }
-
-    const imgDropZone = document.getElementById('imgDropZone');
-    const imgUpload = document.getElementById('imgUpload');
-
-    imgDropZone.addEventListener('dragover', (e) => { e.preventDefault(); imgDropZone.classList.add('drag-over'); });
-    imgDropZone.addEventListener('dragleave', () => imgDropZone.classList.remove('drag-over'));
-    imgDropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      imgDropZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      if (file) convertImage(file);
-    });
-    imgUpload.addEventListener('change', () => {
-      if (imgUpload.files[0]) convertImage(imgUpload.files[0]);
-      imgUpload.value = '';
-    });
+    const convertZone = document.getElementById('convertZone');
+    const convertFileInput = document.getElementById('convertFile');
+    convertZone.addEventListener('dragover', (e) => { e.preventDefault(); convertZone.classList.add('drag-over'); });
+    convertZone.addEventListener('dragleave', () => convertZone.classList.remove('drag-over'));
+    convertZone.addEventListener('drop', (e) => { e.preventDefault(); convertZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) convertImage(e.dataTransfer.files[0]); });
+    convertFileInput.addEventListener('change', () => { if (convertFileInput.files[0]) convertImage(convertFileInput.files[0]); convertFileInput.value = ''; });
 
     async function convertImage(file) {
       const prog = document.getElementById('convertProgress');
@@ -1980,49 +2246,731 @@
       const pct = document.getElementById('convertPct');
       const bar = document.getElementById('convertBar');
       const result = document.getElementById('convertResult');
-
-      prog.classList.add('visible');
-      label.textContent = 'Converting ' + file.name + '...';
-      pct.textContent = '';
-      bar.style.width = '0%';
-      result.innerHTML = '';
-
+      prog.classList.add('visible'); label.textContent = 'Converting ' + file.name + '...'; pct.textContent = ''; bar.style.width = '0%'; result.innerHTML = '';
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('format', convertFormat);
-        formData.append('originalName', file.name);
-
-        const response = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', '/api/convert-image');
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              const p = Math.round((e.loaded / e.total) * 50);
-              pct.textContent = p + '%';
-              bar.style.width = p + '%';
-            }
-          };
-          xhr.onload = () => {
-            if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
-            else reject(new Error(JSON.parse(xhr.responseText).error || 'Conversion failed'));
-          };
-          xhr.onerror = () => reject(new Error('Upload failed'));
-          xhr.send(formData);
-        });
-
-        bar.style.width = '100%';
-        pct.textContent = '100%';
-        label.textContent = response.filename;
-        result.innerHTML = formatBytes(response.inputSize) + ' &rarr; ' + formatBytes(response.outputSize) + ' &mdash; <strong>' + convertFormat.toUpperCase() + '</strong>';
+        const formData = new FormData(); formData.append('file', file); formData.append('format', convertFormat); formData.append('originalName', file.name);
+        const response = await xhrUpload('/api/convert-image', formData, (p) => { const v = Math.round(p * 0.5); pct.textContent = v + '%'; bar.style.width = v + '%'; });
+        bar.style.width = '100%'; pct.textContent = '100%'; label.textContent = response.filename;
+        result.innerHTML = formatBytes(response.inputSize) + ' → ' + formatBytes(response.outputSize) + ' — <strong>' + convertFormat.toUpperCase() + '</strong>';
         loadDownloads();
-      } catch (e) {
-        showError(e.message || 'Conversion failed');
-        prog.classList.remove('visible');
-      }
+      } catch (e) { showToast(e.message || 'Conversion failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    // ─── STRIP ───
+    const stripZone = document.getElementById('stripZone');
+    const stripFileInput = document.getElementById('stripFile');
+    stripZone.addEventListener('dragover', (e) => { e.preventDefault(); stripZone.classList.add('drag-over'); });
+    stripZone.addEventListener('dragleave', () => stripZone.classList.remove('drag-over'));
+    stripZone.addEventListener('drop', (e) => { e.preventDefault(); stripZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) stripMetadata(e.dataTransfer.files[0]); });
+    stripFileInput.addEventListener('change', () => { if (stripFileInput.files[0]) stripMetadata(stripFileInput.files[0]); stripFileInput.value = ''; });
+
+    async function stripMetadata(file) {
+      const prog = document.getElementById('stripProgress');
+      const label = document.getElementById('stripLabel');
+      const pct = document.getElementById('stripPct');
+      const bar = document.getElementById('stripBar');
+      const result = document.getElementById('stripResult');
+      prog.classList.add('visible'); label.textContent = 'Removing metadata from ' + file.name + '...'; pct.textContent = ''; bar.style.width = '0%'; result.innerHTML = '';
+      try {
+        const formData = new FormData(); formData.append('file', file); formData.append('originalName', file.name);
+        const response = await xhrUpload('/api/strip-metadata', formData, (p) => { const v = Math.round(p * 0.5); pct.textContent = v + '%'; bar.style.width = v + '%'; });
+        bar.style.width = '100%'; pct.textContent = '100%'; label.textContent = response.filename;
+        result.innerHTML = formatBytes(response.inputSize) + ' → ' + formatBytes(response.outputSize) + ' — <strong>Metadata removed</strong>';
+        loadDownloads();
+      } catch (e) { showToast(e.message || 'Metadata removal failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    // ─── SHARED ───
+    function xhrUpload(url, formData, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url);
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100)); };
+        xhr.onload = () => { try { const data = JSON.parse(xhr.responseText); if (xhr.status === 200) resolve(data); else reject(new Error(data.error || 'Request failed')); } catch { reject(new Error('Invalid response')); } };
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+      });
+    }
+
+    function pollTool(url, label, pct, bar, result, onComplete) {
+      const iv = setInterval(async () => {
+        try {
+          const res = await fetch(url);
+          const d = await res.json();
+          bar.style.width = d.progress + '%'; pct.textContent = Math.round(d.progress) + '%';
+          if (d.filename) label.textContent = d.filename + '...';
+          if (d.status === 'complete') {
+            clearInterval(iv); label.textContent = d.filename;
+            if (d.originalSize && d.newSize) {
+              const pctSaved = Math.round(((d.originalSize - d.newSize) / d.originalSize) * 100);
+              result.innerHTML = formatBytes(d.originalSize) + ' → ' + formatBytes(d.newSize) + ' — <strong>Crushed ' + pctSaved + '% smaller</strong>';
+            }
+            if (onComplete) onComplete();
+          } else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Operation failed', 'error'); bar.parentElement.parentElement.classList.remove('visible'); }
+        } catch { clearInterval(iv); }
+      }, 500);
+    }
+
+    // ─── DOWNLOADS ───
+    function toggleDownloads() {
+      document.getElementById('downloadsSection').classList.toggle('expanded');
+    }
+
+    async function loadDownloads() {
+      try {
+        const res = await fetch('/api/downloads');
+        const files = await res.json();
+        const section = document.getElementById('downloadsSection');
+        const list = document.getElementById('downloadsList');
+        list.innerHTML = '';
+        if (files.length === 0) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+        document.getElementById('dlCountBadge').textContent = files.length;
+        animateCounter(files.length);
+
+        const videoExts = new Set(['MP4', 'WEBM', 'MKV', 'MOV', 'AVI']);
+        files.slice(0, 20).forEach(f => {
+          const ext = f.name.split('.').pop().toUpperCase();
+          const safe = escapeHtml(f.name);
+          const isVideo = videoExts.has(ext);
+          const isCompressed = f.name.includes('_shrunk.') || /_\d+mb\./.test(f.name);
+          const isResized = /_ig_(reels|portrait|square|landscape)\./.test(f.name);
+          const isOver30 = f.size > 30 * 1024 * 1024;
+          const isCut = /_(?:intro|verse|chorus|hook|drop|bridge|outro)_\d+s\./.test(f.name);
+          const isBoosted = f.name.includes('_boosted.');
+          const d = document.createElement('div');
+          d.className = 'dl-item';
+          let btns = '';
+          if (isVideo && !isCompressed && !isResized) {
+            btns += '<button class="action-btn accent-soft" onclick="resizeFile(\'' + safe.replace(/'/g, "\\'") + '\', this, \'reels\')">IG Resize</button>';
+            if (isOver30) btns += '<button class="action-btn primary" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this, 30)">Meta 30MB</button>';
+            btns += '<button class="action-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Shrink</button>';
+            if (!isBoosted) btns += '<button class="action-btn" onclick="boostFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Boost</button>';
+            if (!f.name.includes('_vocal.')) btns += '<button class="action-btn" onclick="vocalBoostFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Vocal</button>';
+            if (!isCut) btns += '<button class="action-btn accent-soft" onclick="analyzeFromDownload(\'' + safe.replace(/'/g, "\\'") + '\', this)">Analyze</button>';
+          }
+          d.innerHTML = '<div class="dl-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>' +
+            '<div class="dl-info"><div class="dl-name" title="' + safe + '">' + safe + '</div><div class="dl-meta">' + ext + ' · ' + formatBytes(f.size) + '</div></div>' +
+            '<div class="dl-actions">' + btns + '</div><span class="dl-date">' + timeAgo(f.date) + '</span>';
+          list.appendChild(d);
+        });
+      } catch {}
     }
 
     async function openDownloads() { await fetch('/api/open-downloads'); }
+
+    // ─── SHRINK FROM LIST ───
+    async function shrinkFile(filename, btn, targetMB) {
+      btn.disabled = true; btn.textContent = '...';
+      const item = btn.closest('.dl-item');
+      try {
+        const body = { filename }; if (targetMB) body.targetMB = targetMB;
+        const res = await fetch('/api/shrink', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const prog = document.createElement('div');
+        prog.className = 'inline-progress';
+        prog.innerHTML = '<div class="progress-top"><span class="progress-label">Shrinking...</span><span class="progress-pct" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--accent)">0%</span></div><div class="bar-track"><div class="bar-fill"></div></div><div class="progress-result"></div>';
+        item.after(prog); btn.style.display = 'none';
+        const iv = setInterval(async () => {
+          try {
+            const r = await fetch('/api/shrink-progress/' + data.id);
+            const d = await r.json();
+            prog.querySelector('.bar-fill').style.width = d.progress + '%';
+            prog.querySelector('.progress-pct').textContent = Math.round(d.progress) + '%';
+            if (d.status === 'complete') {
+              clearInterval(iv);
+              prog.querySelector('.progress-label').textContent = d.filename;
+              const pctSaved = Math.round(((d.originalSize - d.newSize) / d.originalSize) * 100);
+              prog.querySelector('.progress-result').innerHTML = formatBytes(d.originalSize) + ' → ' + formatBytes(d.newSize) + ' — <strong>' + pctSaved + '% smaller</strong>';
+              setTimeout(() => { prog.remove(); loadDownloads(); }, 3500);
+            } else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Shrink failed', 'error'); prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = targetMB ? 'Meta 30MB' : 'Shrink'; }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) { showToast(e.message || 'Shrink failed', 'error'); btn.disabled = false; btn.textContent = targetMB ? 'Meta 30MB' : 'Shrink'; }
+    }
+
+    // ─── RESIZE FROM LIST ───
+    function resizeFile(filename, btn, preset) {
+      btn.disabled = true; btn.textContent = '...';
+      const item = btn.closest('.dl-item');
+      fetch('/api/resize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, preset: preset || 'reels' }) })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          const prog = document.createElement('div');
+          prog.className = 'inline-progress';
+          prog.innerHTML = '<div class="progress-top"><span class="progress-label">Resizing...</span><span class="progress-pct" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--accent)">0%</span></div><div class="bar-track"><div class="bar-fill"></div></div><div class="progress-result"></div>';
+          item.after(prog); btn.style.display = 'none';
+          const iv = setInterval(async () => {
+            try {
+              const r = await fetch('/api/resize-progress/' + data.id);
+              const d = await r.json();
+              prog.querySelector('.bar-fill').style.width = d.progress + '%';
+              prog.querySelector('.progress-pct').textContent = Math.round(d.progress) + '%';
+              if (d.filename) prog.querySelector('.progress-label').textContent = d.filename;
+              if (d.status === 'complete') { clearInterval(iv); prog.querySelector('.progress-result').innerHTML = '<strong>Resized</strong>'; setTimeout(() => { prog.remove(); loadDownloads(); }, 3000); }
+              else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Resize failed', 'error'); prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = 'IG Resize'; }
+            } catch { clearInterval(iv); }
+          }, 500);
+        })
+        .catch(e => { showToast(e.message || 'Resize failed', 'error'); btn.disabled = false; btn.textContent = 'IG Resize'; });
+    }
+
+    // ─── SONG ANALYZER ───
+    let activeAnalysis = { filename: null, sections: [] };
+
+    const SECTION_COLORS = {
+      'Intro':  { bg: '#E8F5E9', text: '#2E7D32', dbg: '#1B3A1B', dtxt: '#66BB6A' },
+      'Verse':  { bg: '#E3F2FD', text: '#1565C0', dbg: '#0D1F3C', dtxt: '#64B5F6' },
+      'Chorus': { bg: '#FFF3E0', text: '#E65100', dbg: '#3C2100', dtxt: '#FFB74D' },
+      'Hook':   { bg: '#FCE4EC', text: '#C62828', dbg: '#3C0D0D', dtxt: '#EF5350' },
+      'Drop':   { bg: '#F3E5F5', text: '#7B1FA2', dbg: '#2A0F3C', dtxt: '#BA68C8' },
+      'Bridge': { bg: '#FFF9C4', text: '#F9A825', dbg: '#3C3100', dtxt: '#FFD54F' },
+      'Outro':  { bg: '#EFEBE9', text: '#4E342E', dbg: '#2A1F1B', dtxt: '#A1887F' },
+    };
+
+    function getSectionColor(label) {
+      const c = SECTION_COLORS[label] || { bg: '#F5F5F5', text: '#666', dbg: '#1C1C1C', dtxt: '#999' };
+      const root = document.documentElement;
+      const theme = root.getAttribute('data-theme');
+      const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      return isDark ? { bg: c.dbg, text: c.dtxt } : { bg: c.bg, text: c.text };
+    }
+
+    async function analyzeFromDownload(filename, btn) {
+      btn.disabled = true; btn.textContent = 'Analyzing...';
+      const item = btn.closest('.dl-item');
+      const existing = item.nextElementSibling;
+      if (existing && existing.classList.contains('analyzer-inline')) existing.remove();
+      const container = document.createElement('div');
+      container.className = 'analyzer-inline';
+      container.innerHTML = '<div class="analyzer-status"><span class="status-text">Analyzing song structure...</span></div><div class="analyzer-bar-track"><div class="analyzer-bar-fill pulsing" style="width:50%"></div></div><div class="analyzer-pct"></div>';
+      item.after(container);
+      try {
+        const res = await fetch('/api/analyze-song', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename }) });
+        const analysis = await res.json();
+        if (!res.ok) throw new Error(analysis.error);
+        activeAnalysis = { filename, sections: analysis.sections };
+        const fill = container.querySelector('.analyzer-bar-fill');
+        fill.classList.remove('pulsing'); fill.style.width = '100%';
+        container.querySelector('.status-text').textContent = analysis.sections.length + ' sections found';
+        btn.textContent = 'Analyzed'; btn.style.background = 'var(--success-surface)'; btn.style.color = 'var(--success)';
+        setTimeout(() => renderInlineAnalysis(container, analysis, filename), 300);
+      } catch (e) { showToast(e.message || 'Analysis failed', 'error'); container.remove(); btn.disabled = false; btn.textContent = 'Analyze'; }
+    }
+
+    function renderInlineAnalysis(container, analysis, filename) {
+      let html = '<div style="position:relative;height:56px;background:var(--surface-hover);border-radius:12px;overflow:hidden;margin:12px 0"><canvas style="width:100%;height:100%" class="wave-canvas"></canvas><div class="wave-overlays" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></div></div>';
+      analysis.sections.forEach((s, i) => {
+        const c = getSectionColor(s.label);
+        html += '<div class="section-card"><span class="section-label-badge" style="background:' + c.bg + ';color:' + c.text + '">' + escapeHtml(s.label) + '</span><div class="section-info"><div class="section-time">' + fmtTime(s.start) + ' – ' + fmtTime(s.end) + '</div><div class="section-meta">' + s.duration + 's · Energy ' + Math.round(s.energy * 100) + '%</div></div><div class="section-energy-bar"><div class="section-energy-fill" style="width:' + (s.energy * 100) + '%"></div></div><div class="section-btns"><button class="section-cut-btn" onclick="cutSection(' + i + ', this)">Cut</button><button class="section-resize-btn" onclick="cutAndResize(' + i + ', this)">IG Resize</button></div></div>';
+      });
+      html += '<button class="cut-all-btn" onclick="cutAllSections(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Cut All Sections</button>';
+      container.querySelector('.analyzer-status').style.display = 'none';
+      container.querySelector('.analyzer-bar-track').style.display = 'none';
+      container.querySelector('.analyzer-pct').style.display = 'none';
+      container.insertAdjacentHTML('beforeend', html);
+      const canvas = container.querySelector('.wave-canvas');
+      const wrap = canvas.parentElement;
+      canvas.width = wrap.offsetWidth * 2; canvas.height = 112;
+      const ctx = canvas.getContext('2d');
+      const waveform = analysis.waveform || [];
+      const barW = canvas.width / waveform.length;
+      const mid = canvas.height / 2;
+      const overlays = container.querySelector('.wave-overlays');
+      analysis.sections.forEach(s => {
+        const left = (s.start / analysis.duration) * 100;
+        const width = ((s.end - s.start) / analysis.duration) * 100;
+        const c = getSectionColor(s.label);
+        const div = document.createElement('div');
+        div.style.cssText = 'position:absolute;top:0;height:100%;background:' + c.bg + ';opacity:0.5;left:' + left + '%;width:' + width + '%;border-right:1px solid ' + c.text;
+        overlays.appendChild(div);
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:absolute;top:3px;font-size:9px;font-weight:700;color:' + c.text + ';left:' + left + '%;padding-left:3px';
+        lbl.textContent = s.label;
+        overlays.appendChild(lbl);
+      });
+      const barColor = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#1E1E1F';
+      waveform.forEach((v, i) => {
+        const h = Math.max(2, v * mid * 0.85);
+        ctx.fillStyle = barColor; ctx.globalAlpha = 0.5;
+        ctx.fillRect(i * barW, mid - h, Math.max(1, barW - 0.5), h * 2);
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    async function cutSection(idx, btn) {
+      const s = activeAnalysis.sections[idx];
+      if (!s || !activeAnalysis.filename) return;
+      btn.disabled = true; btn.textContent = '...';
+      try {
+        const res = await fetch('/api/cut-section', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: activeAnalysis.filename, start: s.start, end: s.end, label: s.label }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/cut-progress/' + data.id);
+            const d = await pr.json();
+            if (d.progress > 0 && d.progress < 100) btn.textContent = d.progress + '%';
+            if (d.status === 'complete') { clearInterval(iv); btn.textContent = '✓'; btn.style.background = 'var(--success-surface)'; btn.style.color = 'var(--success)'; loadDownloads(); }
+            else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Cut failed', 'error'); btn.disabled = false; btn.textContent = 'Cut'; btn.style.background = ''; btn.style.color = ''; }
+          } catch { clearInterval(iv); }
+        }, 400);
+      } catch (e) { showToast(e.message || 'Cut failed', 'error'); btn.disabled = false; btn.textContent = 'Cut'; }
+    }
+
+    async function cutAndResize(idx, btn) {
+      const s = activeAnalysis.sections[idx];
+      if (!s || !activeAnalysis.filename) return;
+      btn.disabled = true; btn.textContent = 'Cutting...';
+      try {
+        const cutRes = await fetch('/api/cut-section', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: activeAnalysis.filename, start: s.start, end: s.end, label: s.label }) });
+        const cutData = await cutRes.json();
+        if (!cutRes.ok) throw new Error(cutData.error);
+        const cutFile = await new Promise((resolve, reject) => {
+          const iv = setInterval(async () => {
+            try {
+              const pr = await fetch('/api/cut-progress/' + cutData.id);
+              const d = await pr.json();
+              if (d.progress > 0 && d.progress < 100) btn.textContent = 'Cut ' + d.progress + '%';
+              if (d.status === 'complete') { clearInterval(iv); resolve(d.filename); }
+              else if (d.status === 'error') { clearInterval(iv); reject(new Error(d.error)); }
+            } catch (e) { clearInterval(iv); reject(e); }
+          }, 400);
+        });
+        btn.textContent = 'Resizing...';
+        const resRes = await fetch('/api/resize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: cutFile, preset: 'reels' }) });
+        const resData = await resRes.json();
+        if (!resRes.ok) throw new Error(resData.error);
+        const iv2 = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/resize-progress/' + resData.id);
+            const d = await pr.json();
+            if (d.progress > 0 && d.progress < 100) btn.textContent = 'Resize ' + d.progress + '%';
+            if (d.status === 'complete') { clearInterval(iv2); btn.textContent = '✓'; btn.style.background = 'var(--success-surface)'; btn.style.color = 'var(--success)'; loadDownloads(); }
+            else if (d.status === 'error') { clearInterval(iv2); showToast(d.error || 'Resize failed', 'error'); btn.disabled = false; btn.textContent = 'IG Resize'; btn.style.background = ''; btn.style.color = ''; }
+          } catch { clearInterval(iv2); }
+        }, 400);
+      } catch (e) { showToast(e.message || 'Failed', 'error'); btn.disabled = false; btn.textContent = 'IG Resize'; }
+    }
+
+    async function cutAllSections(allBtn) {
+      allBtn.disabled = true;
+      const container = allBtn.closest('.analyzer-inline');
+      const buttons = container.querySelectorAll('.section-cut-btn');
+      for (let i = 0; i < buttons.length; i++) {
+        if (!buttons[i].disabled) { await cutSection(i, buttons[i]); await new Promise(r => setTimeout(r, 500)); }
+      }
+      allBtn.textContent = 'All Done'; allBtn.style.background = 'var(--success-surface)'; allBtn.style.color = 'var(--success)'; allBtn.style.boxShadow = 'none';
+    }
+
+    // ─── VOLUME ───
+    let volumeLUFS = -14;
+    let volumeFilename = null;
+    let volumeMode = 'normalize';
+    let vocalIntensity = 'medium';
+    let compareIntensity = 'medium';
+    let vocalSourceFile = null;
+
+    function pickLufs(btn) {
+      document.querySelectorAll('#volumeTargetRow .chip').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      volumeLUFS = parseInt(btn.dataset.lufs);
+    }
+
+    function pickVolumeMode(btn) {
+      document.querySelectorAll('#volumeModeRow .chip').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      volumeMode = btn.dataset.mode;
+      const targetRow = document.getElementById('volumeTargetRow');
+      const intensityRow = document.getElementById('vocalIntensityRow');
+      const card = document.getElementById('volumeCard');
+      const badge = document.querySelector('#tab-volume .tool-badge');
+      card.classList.remove('visible');
+      if (volumeMode === 'vocal') {
+        targetRow.style.display = 'none'; intensityRow.style.display = '';
+        badge.textContent = 'VOCAL';
+        document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
+        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; Compress &amp; boost vocals over background noise';
+      } else {
+        targetRow.style.display = ''; intensityRow.style.display = 'none';
+        badge.textContent = '-14 LUFS';
+        document.getElementById('volumeZoneTitle').textContent = 'Drop a video or audio file';
+        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; Analyze &amp; boost volume for ads';
+      }
+    }
+
+    function pickIntensity(btn) {
+      document.querySelectorAll('#vocalIntensityRow .chip').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      vocalIntensity = btn.dataset.intensity;
+    }
+
+    const volumeZone = document.getElementById('volumeZone');
+    const volumeFileInput = document.getElementById('volumeFile');
+    volumeZone.addEventListener('dragover', (e) => { e.preventDefault(); volumeZone.classList.add('drag-over'); });
+    volumeZone.addEventListener('dragleave', () => volumeZone.classList.remove('drag-over'));
+    volumeZone.addEventListener('drop', (e) => { e.preventDefault(); volumeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(e.dataTransfer.files[0]); else uploadAndAnalyzeVolume(e.dataTransfer.files[0]); } });
+    volumeFileInput.addEventListener('change', () => { if (volumeFileInput.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(volumeFileInput.files[0]); else uploadAndAnalyzeVolume(volumeFileInput.files[0]); } volumeFileInput.value = ''; });
+
+    async function uploadAndAnalyzeVolume(file) {
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+      const card = document.getElementById('volumeCard');
+
+      card.classList.remove('visible');
+      prog.classList.add('visible');
+      label.textContent = 'Uploading ' + file.name + '...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+
+      try {
+        const formData = new FormData(); formData.append('file', file);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = p + '%'; bar.style.width = p + '%'; });
+
+        volumeFilename = uploadRes.filename;
+        label.textContent = 'Analyzing volume levels...';
+        bar.style.width = '100%'; pct.textContent = '';
+
+        const res = await fetch('/api/volume-analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: uploadRes.filename }) });
+        const analysis = await res.json();
+        if (!res.ok) throw new Error(analysis.error);
+
+        prog.classList.remove('visible');
+        showVolumeAnalysis(analysis);
+      } catch (e) { showToast(e.message || 'Volume analysis failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    function showVolumeAnalysis(analysis) {
+      const card = document.getElementById('volumeCard');
+      const lufs = analysis.inputLoudness;
+      const peak = analysis.truePeak;
+      const lra = analysis.loudnessRange;
+      const target = volumeLUFS;
+
+      document.getElementById('volLufs').textContent = lufs.toFixed(1);
+      document.getElementById('volPeak').textContent = peak.toFixed(1);
+      document.getElementById('volRange').textContent = lra.toFixed(1);
+
+      const lufsEl = document.getElementById('volLufs');
+      const diff = lufs - target;
+      if (Math.abs(diff) <= 2) lufsEl.style.color = 'var(--success)';
+      else lufsEl.style.color = 'var(--error)';
+
+      const currentPct = Math.max(0, Math.min(100, ((lufs + 60) / 60) * 100));
+      const targetPct = ((target + 60) / 60) * 100;
+
+      document.getElementById('lufsCurrentMarker').style.left = currentPct + '%';
+      document.getElementById('lufsTargetLine').style.left = targetPct + '%';
+      document.getElementById('lufsTargetLbl').textContent = 'Target ' + target;
+
+      const verdict = document.getElementById('volumeVerdict');
+      if (diff < -6) { verdict.className = 'volume-verdict quiet'; verdict.textContent = 'Too quiet for ads — needs a ' + Math.abs(Math.round(diff)) + ' dB boost'; }
+      else if (diff < -2) { verdict.className = 'volume-verdict quiet'; verdict.textContent = 'A bit quiet — ' + Math.abs(Math.round(diff)) + ' dB below target'; }
+      else if (diff <= 2) { verdict.className = 'volume-verdict good'; verdict.textContent = 'Volume is good for advertising'; }
+      else { verdict.className = 'volume-verdict loud'; verdict.textContent = 'Too loud — ' + Math.round(diff) + ' dB over target'; }
+
+      const btn = document.getElementById('normalizeBtn');
+      btn.textContent = 'Normalize to ' + target + ' LUFS';
+      btn.disabled = false;
+      btn.style.background = ''; btn.style.color = ''; btn.style.boxShadow = '';
+
+      card.classList.add('visible');
+    }
+
+    async function normalizeVolume() {
+      if (!volumeFilename) return;
+      const btn = document.getElementById('normalizeBtn');
+      btn.disabled = true; btn.textContent = 'Normalizing...';
+
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+
+      prog.classList.add('visible');
+      label.textContent = 'Normalizing volume...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/volume-normalize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: volumeFilename, targetLUFS: volumeLUFS }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            bar.style.width = d.progress + '%'; pct.textContent = Math.round(d.progress) + '%';
+            if (d.status === 'analyzing') label.textContent = 'Measuring levels...';
+            else if (d.status === 'normalizing') label.textContent = 'Boosting volume...';
+            if (d.status === 'complete') {
+              clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%';
+              label.textContent = d.filename;
+              result.innerHTML = '<strong>Volume normalized to ' + volumeLUFS + ' LUFS</strong>';
+              btn.textContent = 'Done!'; btn.style.background = 'var(--success-surface)'; btn.style.color = 'var(--success)'; btn.style.boxShadow = 'none';
+              loadDownloads();
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'Normalization failed', 'error');
+              prog.classList.remove('visible'); btn.disabled = false;
+              btn.textContent = 'Normalize to ' + volumeLUFS + ' LUFS';
+              btn.style.background = ''; btn.style.color = ''; btn.style.boxShadow = '';
+            }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) {
+        showToast(e.message || 'Normalization failed', 'error');
+        prog.classList.remove('visible'); btn.disabled = false;
+        btn.textContent = 'Normalize to ' + volumeLUFS + ' LUFS';
+      }
+    }
+
+    async function uploadAndVocalBoost(file) {
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+
+      document.getElementById('volumeCard').classList.remove('visible');
+      document.getElementById('volumeCompare').classList.remove('visible');
+      prog.classList.add('visible');
+      label.textContent = 'Uploading ' + file.name + '...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+
+      try {
+        const formData = new FormData(); formData.append('file', file);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = p + '%'; bar.style.width = p + '%'; });
+
+        vocalSourceFile = uploadRes.filename;
+        compareIntensity = vocalIntensity;
+        runVocalBoost(uploadRes.filename, vocalIntensity);
+      } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    async function runVocalBoost(filename, intensity) {
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+
+      prog.classList.add('visible');
+      label.textContent = 'Boosting vocals (' + intensity + ')...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+      document.getElementById('volumeCompare').classList.remove('visible');
+
+      try {
+        const res = await fetch('/api/vocal-boost', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, intensity }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            bar.style.width = d.progress + '%'; pct.textContent = Math.round(d.progress) + '%';
+            if (d.filename) label.textContent = 'Boosting vocals...';
+            if (d.status === 'complete') {
+              clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%';
+              label.textContent = d.filename;
+              result.innerHTML = '<strong>Vocals boosted (' + intensity + ')</strong>';
+              loadDownloads();
+              showVocalCompare(filename, d.filename, intensity);
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'Vocal boost failed', 'error'); prog.classList.remove('visible');
+            }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) { showToast(e.message || 'Vocal boost failed', 'error'); prog.classList.remove('visible'); }
+    }
+
+    let compareSource = 'processed';
+
+    function getActiveCompareAudio() {
+      return document.getElementById(compareSource === 'original' ? 'compareOriginal' : 'compareProcessed');
+    }
+
+    function fmtAudioTime(s) {
+      if (!s || !isFinite(s)) return '0:00';
+      const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function updateCompareUI() {
+      const a = getActiveCompareAudio();
+      if (a.duration) {
+        document.getElementById('compareSeek').value = (a.currentTime / a.duration) * 100;
+        document.getElementById('compareTime').textContent = fmtAudioTime(a.currentTime) + ' / ' + fmtAudioTime(a.duration);
+      }
+    }
+
+    function showVocalCompare(originalFile, processedFile, intensity) {
+      const t = Date.now();
+      const orig = document.getElementById('compareOriginal');
+      const proc = document.getElementById('compareProcessed');
+      orig.src = '/api/stream/' + encodeURIComponent(originalFile) + '?t=' + t;
+      proc.src = '/api/stream/' + encodeURIComponent(processedFile) + '?t=' + t;
+
+      compareSource = 'processed';
+      document.getElementById('compareToggle').checked = true;
+      document.getElementById('compareTag').textContent = intensity.toUpperCase();
+      document.getElementById('compareFilename').textContent = originalFile;
+      document.getElementById('comparePlayIcon').style.display = '';
+      document.getElementById('comparePauseIcon').style.display = 'none';
+      document.getElementById('compareSeek').value = 0;
+      document.getElementById('compareTime').textContent = '0:00 / 0:00';
+      updateToggleLabels();
+
+      orig.ontimeupdate = updateCompareUI;
+      proc.ontimeupdate = updateCompareUI;
+      const resetPlay = () => { document.getElementById('comparePlayIcon').style.display = ''; document.getElementById('comparePauseIcon').style.display = 'none'; };
+      orig.onended = resetPlay;
+      proc.onended = resetPlay;
+
+      document.querySelectorAll('#compareIntensityRow .chip').forEach(el => {
+        el.classList.toggle('active', el.dataset.intensity === intensity);
+      });
+      const dlBtn = document.getElementById('compareDownloadBtn');
+      dlBtn.href = '/api/stream/' + encodeURIComponent(processedFile);
+      dlBtn.download = processedFile;
+
+      document.getElementById('volumeCompare').classList.add('visible');
+    }
+
+    function toggleComparePlay() {
+      const a = getActiveCompareAudio();
+      if (a.paused) {
+        a.play();
+        document.getElementById('comparePlayIcon').style.display = 'none';
+        document.getElementById('comparePauseIcon').style.display = '';
+      } else {
+        a.pause();
+        document.getElementById('comparePlayIcon').style.display = '';
+        document.getElementById('comparePauseIcon').style.display = 'none';
+      }
+    }
+
+    function seekCompare(val) {
+      const a = getActiveCompareAudio();
+      if (a.duration) {
+        const t = (val / 100) * a.duration;
+        a.currentTime = t;
+        const other = document.getElementById(compareSource === 'original' ? 'compareProcessed' : 'compareOriginal');
+        other.currentTime = t;
+      }
+    }
+
+    function toggleCompareSource() {
+      const wasPlaying = !getActiveCompareAudio().paused;
+      const ct = getActiveCompareAudio().currentTime;
+      getActiveCompareAudio().pause();
+
+      compareSource = document.getElementById('compareToggle').checked ? 'processed' : 'original';
+      const next = getActiveCompareAudio();
+      next.currentTime = ct;
+      if (wasPlaying) next.play();
+      updateToggleLabels();
+    }
+
+    function setCompareSource(src) {
+      const toggle = document.getElementById('compareToggle');
+      if ((src === 'processed') === toggle.checked) return;
+      toggle.checked = src === 'processed';
+      toggleCompareSource();
+    }
+
+    function updateToggleLabels() {
+      document.getElementById('compareLabelOrig').classList.toggle('active', compareSource === 'original');
+      document.getElementById('compareLabelProc').classList.toggle('active', compareSource === 'processed');
+    }
+
+    function pickCompareIntensity(btn) {
+      document.querySelectorAll('#compareIntensityRow .chip').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      compareIntensity = btn.dataset.intensity;
+    }
+
+    function reprocessVocal() {
+      if (!vocalSourceFile) return;
+      document.getElementById('compareOriginal').pause();
+      document.getElementById('compareProcessed').pause();
+      runVocalBoost(vocalSourceFile, compareIntensity);
+    }
+
+    async function vocalBoostFile(filename, btn) {
+      btn.disabled = true; btn.textContent = '...';
+      const item = btn.closest('.dl-item');
+      try {
+        const res = await fetch('/api/vocal-boost', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, intensity: 'medium' }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const prog = document.createElement('div');
+        prog.className = 'inline-progress';
+        prog.innerHTML = '<div class="progress-top"><span class="progress-label">Boosting vocals...</span><span class="progress-pct" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--accent)">0%</span></div><div class="bar-track"><div class="bar-fill"></div></div><div class="progress-result"></div>';
+        item.after(prog); btn.style.display = 'none';
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            prog.querySelector('.bar-fill').style.width = d.progress + '%';
+            prog.querySelector('.progress-pct').textContent = Math.round(d.progress) + '%';
+            if (d.status === 'complete') {
+              clearInterval(iv);
+              prog.querySelector('.progress-label').textContent = d.filename;
+              prog.querySelector('.progress-result').innerHTML = '<strong>Vocals boosted</strong>';
+              setTimeout(() => { prog.remove(); loadDownloads(); }, 3500);
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'Vocal boost failed', 'error');
+              prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = 'Vocal';
+            }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) { showToast(e.message || 'Vocal boost failed', 'error'); btn.disabled = false; btn.textContent = 'Vocal'; }
+    }
+
+    async function boostFile(filename, btn) {
+      btn.disabled = true; btn.textContent = '...';
+      const item = btn.closest('.dl-item');
+      try {
+        const res = await fetch('/api/volume-normalize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, targetLUFS: -14 }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const prog = document.createElement('div');
+        prog.className = 'inline-progress';
+        prog.innerHTML = '<div class="progress-top"><span class="progress-label">Measuring volume...</span><span class="progress-pct" style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--accent)">0%</span></div><div class="bar-track"><div class="bar-fill"></div></div><div class="progress-result"></div>';
+        item.after(prog); btn.style.display = 'none';
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            prog.querySelector('.bar-fill').style.width = d.progress + '%';
+            prog.querySelector('.progress-pct').textContent = Math.round(d.progress) + '%';
+            if (d.status === 'analyzing') prog.querySelector('.progress-label').textContent = 'Measuring volume...';
+            else if (d.status === 'normalizing') prog.querySelector('.progress-label').textContent = 'Boosting to -14 LUFS...';
+            if (d.status === 'complete') {
+              clearInterval(iv);
+              prog.querySelector('.progress-label').textContent = d.filename;
+              prog.querySelector('.progress-result').innerHTML = '<strong>Boosted to -14 LUFS</strong>';
+              setTimeout(() => { prog.remove(); loadDownloads(); }, 3500);
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'Boost failed', 'error');
+              prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = 'Boost';
+            }
+          } catch { clearInterval(iv); }
+        }, 500);
+      } catch (e) { showToast(e.message || 'Boost failed', 'error'); btn.disabled = false; btn.textContent = 'Boost'; }
+    }
+
+    // ─── GLOBAL ───
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => e.preventDefault());
+
+    // ─── INIT ───
     loadDownloads();
   </script>
 </body>

@@ -9,13 +9,74 @@ const multer = require('multer');
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
+app.use(express.static(path.join(__dirname, 'public'), { etag: true, maxAge: '1h' }));
 
 const DOWNLOADS_DIR = path.join(__dirname, 'downloads');
 const YT_DLP = path.join(__dirname, 'yt-dlp-bin');
 const COOKIES_FILE = path.join(__dirname, 'cookies.txt');
 const activeDownloads = new Map();
 const activeShrinks = new Map();
+const activeResizes = new Map();
+const activeVolumes = new Map();
+
+function probeVideoCodec(filePath) {
+  return new Promise((resolve) => {
+    execFile('ffprobe', ['-v', 'error', '-select_streams', 'v:0',
+      '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', filePath],
+      { timeout: 10000 }, (err, stdout) => {
+        resolve(err ? '' : stdout.trim().split('\n')[0]);
+      });
+  });
+}
+
+function autoStripMetadata(filePath) {
+  return new Promise((resolve) => {
+    if (!fs.existsSync(filePath)) return resolve();
+    const ext = path.extname(filePath).toLowerCase();
+    const strippable = new Set(['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v', '.mp3', '.m4a',
+      '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.heic', '.heif', '.webp']);
+    if (!strippable.has(ext)) return resolve();
+    const tmp = filePath + '.tmp_clean' + ext;
+    const isVideo = ['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v', '.mp3', '.m4a'].includes(ext);
+
+    if (!isVideo) {
+      const args = ['-y', '-i', filePath, '-map_metadata', '-1', tmp];
+      execFile('ffmpeg', args, { timeout: 120000 }, (err) => {
+        if (err || !fs.existsSync(tmp)) {
+          try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch {}
+          console.error('[meta-strip] failed for', path.basename(filePath), err?.message || '');
+          return resolve();
+        }
+        try { fs.unlinkSync(filePath); fs.renameSync(tmp, filePath); } catch {}
+        console.log('[meta-strip] cleaned', path.basename(filePath));
+        resolve();
+      });
+      return;
+    }
+
+    probeVideoCodec(filePath).then((codec) => {
+      const needsTranscode = codec && codec !== 'h264' && codec !== 'aac' && codec !== '';
+      const args = needsTranscode
+        ? ['-y', '-i', filePath, '-map', '0', '-map_metadata', '-1',
+           '-c:v', 'libx264', '-crf', '18', '-preset', 'fast', '-pix_fmt', 'yuv420p',
+           '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', tmp]
+        : ['-y', '-i', filePath, '-map', '0', '-map_metadata', '-1', '-c', 'copy', '-fflags', '+bitexact', tmp];
+
+      if (needsTranscode) console.log('[meta-strip] transcoding', codec, '→ h264 for', path.basename(filePath));
+
+      execFile('ffmpeg', args, { timeout: 300000 }, (err) => {
+        if (err || !fs.existsSync(tmp)) {
+          try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch {}
+          console.error('[meta-strip] failed for', path.basename(filePath), err?.message || '');
+          return resolve();
+        }
+        try { fs.unlinkSync(filePath); fs.renameSync(tmp, filePath); } catch {}
+        console.log('[meta-strip] cleaned', path.basename(filePath));
+        resolve();
+      });
+    });
+  });
+}
 
 
 function detectPlatform(url) {
@@ -423,6 +484,8 @@ app.post('/api/download', (req, res) => {
         dl.progress = 10;
 
         await tikwmDownload(downloadUrl, destPath);
+        dl.progress = 95;
+        await autoStripMetadata(destPath);
         dl.progress = 100;
         dl.status = 'complete';
       } catch (e) {
@@ -452,6 +515,8 @@ app.post('/api/download', (req, res) => {
         dl.progress = 10;
 
         await tikwmDownload(igUrl, destPath);
+        dl.progress = 95;
+        await autoStripMetadata(destPath);
         dl.progress = 100;
         dl.status = 'complete';
       } catch (e) {
@@ -479,12 +544,11 @@ app.post('/api/download', (req, res) => {
     args.push('-x', '--audio-format', 'mp3');
   } else {
     if (formatId) {
-      args.push('-f', `${formatId}+bestaudio/${formatId}/best`);
+      args.push('-f', `${formatId}+bestaudio/bestvideo+bestaudio/best`);
     } else {
       args.push('-f', 'bestvideo+bestaudio/best');
     }
-    args.push('--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg:-c:v libx264 -preset fast -crf 18 -c:a aac -b:a 192k');
+    args.push('--merge-output-format', 'mp4');
   }
 
   args.push('-o', path.join(DOWNLOADS_DIR, '%(title)s.%(ext)s'));
@@ -527,12 +591,12 @@ app.post('/api/download', (req, res) => {
       dl.filename = path.basename(destMatch[1].trim());
     }
 
-    const mergeMatch = line.match(/\[Merger\].*?Merging.*?into\s*(.+)/);
+    const mergeMatch = line.match(/\[Merger\].*?Merging.*?into\s*"?(.+?)"?\s*$/);
     if (mergeMatch) {
       dl.filename = path.basename(mergeMatch[1].trim());
     }
 
-    const alreadyMatch = line.match(/\[download\].*?(.+?) has already been downloaded/);
+    const alreadyMatch = line.match(/\[download\].*?"?(.+?)"? has already been downloaded/);
     if (alreadyMatch) {
       dl.filename = path.basename(alreadyMatch[1].trim());
       dl.progress = 100;
@@ -545,20 +609,21 @@ app.post('/api/download', (req, res) => {
     console.error('[yt-dlp]', d.toString().trim());
   });
 
-  proc.on('close', (code) => {
+  proc.on('close', async (code) => {
     const dl = activeDownloads.get(id);
     if (!dl) return;
 
     if (code === 0) {
-      dl.status = 'complete';
-      dl.progress = 100;
-
       if (!dl.filename) {
         const files = fs.readdirSync(DOWNLOADS_DIR)
           .map((f) => ({ name: f, time: fs.statSync(path.join(DOWNLOADS_DIR, f)).mtimeMs }))
           .sort((a, b) => b.time - a.time);
         if (files.length > 0) dl.filename = files[0].name;
       }
+      dl.progress = 95;
+      if (dl.filename) await autoStripMetadata(path.join(DOWNLOADS_DIR, dl.filename));
+      dl.status = 'complete';
+      dl.progress = 100;
     } else {
       dl.status = 'error';
       dl.error = stderr || 'Download failed';
@@ -767,6 +832,83 @@ app.get('/api/shrink-progress/:id', (req, res) => {
   }
 });
 
+const RESIZE_PRESETS = {
+  'reels': { w: 1080, h: 1920, label: 'ig_reels' },
+  'portrait': { w: 1080, h: 1350, label: 'ig_portrait' },
+  'square': { w: 1080, h: 1080, label: 'ig_square' },
+  'landscape': { w: 1080, h: 566, label: 'ig_landscape' },
+};
+
+app.post('/api/resize', (req, res) => {
+  const { filename, preset } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const p = RESIZE_PRESETS[preset];
+  if (!p) return res.status(400).json({ error: 'Invalid preset. Use: reels, portrait, square, landscape' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  const outputFilename = `${base}_${p.label}${ext}`;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+  const id = crypto.randomBytes(8).toString('hex');
+
+  execFile('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', inputPath], (err, stdout) => {
+    let totalDuration = 0;
+    if (!err) {
+      try { totalDuration = parseFloat(JSON.parse(stdout).format.duration) || 0; } catch {}
+    }
+
+    activeResizes.set(id, { progress: 0, status: 'resizing', filename: outputFilename, error: null });
+    res.json({ id });
+
+    const vf = `split[bg][fg];[bg]scale=${p.w}:${p.h}:force_original_aspect_ratio=increase,crop=${p.w}:${p.h},boxblur=20:5[bg_blur];[fg]scale=${p.w}:${p.h}:force_original_aspect_ratio=decrease,setsar=1[fg_scaled];[bg_blur][fg_scaled]overlay=(W-w)/2:(H-h)/2,setsar=1`;
+    const args = ['-y', '-i', inputPath, '-vf', vf,
+      '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
+      '-progress', 'pipe:1', outputPath];
+
+    const proc = spawn('ffmpeg', args);
+
+    proc.stdout.on('data', (data) => {
+      for (const line of data.toString().split('\n')) {
+        const m = line.match(/out_time_us=(\d+)/);
+        if (m && totalDuration > 0) {
+          const resize = activeResizes.get(id);
+          if (resize) resize.progress = Math.min(99, Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 100));
+        }
+      }
+    });
+    proc.stderr.on('data', () => {});
+
+    proc.on('close', (code) => {
+      const resize = activeResizes.get(id);
+      if (!resize) return;
+      if (code === 0 && fs.existsSync(outputPath)) {
+        resize.progress = 100;
+        resize.status = 'complete';
+      } else {
+        resize.status = 'error';
+        resize.error = 'Resize failed';
+        try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+      }
+    });
+  });
+});
+
+app.get('/api/resize-progress/:id', (req, res) => {
+  const resize = activeResizes.get(req.params.id);
+  if (!resize) return res.status(404).json({ error: 'Not found' });
+  res.json({ progress: resize.progress, status: resize.status, filename: resize.filename, error: resize.error });
+  if (resize.status === 'complete' || resize.status === 'error') {
+    setTimeout(() => activeResizes.delete(req.params.id), DOWNLOAD_TTL_MS);
+  }
+});
+
 const imageUpload = multer({
   storage: multer.diskStorage({
     destination: DOWNLOADS_DIR,
@@ -809,6 +951,378 @@ app.post('/api/convert-image', imageUpload.single('file'), (req, res) => {
     const inputSize = req.file.size;
     const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
     res.json({ filename: outputFilename, inputSize, outputSize });
+  });
+});
+
+const metaUpload = multer({
+  storage: multer.diskStorage({
+    destination: DOWNLOADS_DIR,
+    filename: (req, file, cb) => {
+      const sanitized = file.originalname.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+      cb(null, `_meta_${Date.now()}_${sanitized || 'file'}`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 },
+});
+
+app.post('/api/strip-metadata', metaUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const inputPath = req.file.path;
+  const originalName = req.body.originalName || req.file.originalname || 'file';
+  const ext = path.extname(originalName).toLowerCase();
+  const baseName = path.basename(originalName, path.extname(originalName))
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim() || 'file';
+  const outputFilename = `${baseName}_clean${ext}`;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+
+  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.heic', '.heif', '.webp']);
+  const videoExts = new Set(['.mp4', '.mov', '.mkv', '.webm', '.avi', '.m4v', '.flv', '.wmv']);
+
+  const isImage = imageExts.has(ext);
+  const isVideo = videoExts.has(ext);
+
+  if (!isImage && !isVideo) {
+    try { fs.unlinkSync(inputPath); } catch {}
+    return res.status(400).json({ error: 'Unsupported file type. Use images or videos.' });
+  }
+
+  let args;
+  if (isVideo) {
+    args = ['-y', '-i', inputPath, '-map', '0', '-map_metadata', '-1',
+      '-c', 'copy', '-fflags', '+bitexact', outputPath];
+  } else {
+    args = ['-y', '-i', inputPath, '-map_metadata', '-1', outputPath];
+  }
+
+  execFile('ffmpeg', args, { timeout: 120000 }, (err, stdout, stderr) => {
+    try { fs.unlinkSync(inputPath); } catch {}
+
+    if (err) {
+      console.error('metadata strip error:', stderr || err.message);
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+      return res.status(500).json({ error: 'Failed to remove metadata. Make sure the file is valid.' });
+    }
+
+    const inputSize = req.file.size;
+    const outputSize = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : 0;
+    res.json({ filename: outputFilename, inputSize, outputSize });
+  });
+});
+
+// ─── SONG ANALYZER ───
+const activeCuts = new Map();
+
+app.post('/api/analyze-song', (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const scriptPath = path.join(__dirname, 'analyze_song.py');
+  const analyzeScript = path.join(__dirname, 'run_analyze.sh');
+  execFile(analyzeScript, [inputPath], { timeout: 120000, maxBuffer: 10 * 1024 * 1024, cwd: __dirname }, (err, stdout, stderr) => {
+    if (err) {
+      console.error('analyze error:', stderr || err.message);
+      return res.status(500).json({ error: 'Analysis failed: ' + (stderr || err.message).slice(0, 200) });
+    }
+    try {
+      const result = JSON.parse(stdout);
+      res.json(result);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to parse analysis output' });
+    }
+  });
+});
+
+app.post('/api/analyze-upload', multer({
+  storage: multer.diskStorage({
+    destination: DOWNLOADS_DIR,
+    filename: (req, file, cb) => {
+      const sanitized = file.originalname.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+      cb(null, sanitized || `upload_${Date.now()}.mp4`);
+    },
+  }),
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 },
+}).single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ filename: req.file.filename, size: req.file.size });
+});
+
+app.post('/api/cut-section', (req, res) => {
+  const { filename, start, end, label } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+  if (start == null || end == null) return res.status(400).json({ error: 'Start and end are required' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  const tag = (label || 'section').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const outputFilename = `${base}_${tag}_${Math.round(start)}s${ext}`;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+  const id = crypto.randomBytes(8).toString('hex');
+
+  const duration = end - start;
+  activeCuts.set(id, { progress: 0, status: 'cutting', filename: outputFilename, error: null });
+  res.json({ id });
+
+  const args = ['-y', '-ss', String(start), '-t', String(duration), '-i', inputPath,
+    '-c:v', 'libx264', '-crf', '18', '-preset', 'fast', '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
+    '-progress', 'pipe:1', outputPath];
+
+  const proc = spawn('ffmpeg', args);
+
+  proc.stdout.on('data', (data) => {
+    for (const line of data.toString().split('\n')) {
+      const m = line.match(/out_time_us=(\d+)/);
+      if (m && duration > 0) {
+        const cut = activeCuts.get(id);
+        if (cut) cut.progress = Math.min(99, Math.round((parseInt(m[1]) / 1000000 / duration) * 100));
+      }
+    }
+  });
+  proc.stderr.on('data', () => {});
+
+  proc.on('close', (code) => {
+    const cut = activeCuts.get(id);
+    if (!cut) return;
+    if (code === 0 && fs.existsSync(outputPath)) {
+      cut.progress = 100;
+      cut.status = 'complete';
+    } else {
+      cut.status = 'error';
+      cut.error = 'Cut failed';
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+    }
+  });
+});
+
+app.get('/api/cut-progress/:id', (req, res) => {
+  const cut = activeCuts.get(req.params.id);
+  if (!cut) return res.status(404).json({ error: 'Not found' });
+  res.json({ progress: cut.progress, status: cut.status, filename: cut.filename, error: cut.error });
+  if (cut.status === 'complete' || cut.status === 'error') {
+    setTimeout(() => activeCuts.delete(req.params.id), 60000);
+  }
+});
+
+// ─── VOLUME ANALYZER ───
+
+app.post('/api/volume-analyze', (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const args = ['-hide_banner', '-i', inputPath, '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json', '-f', 'null', '/dev/null'];
+  const proc = spawn('ffmpeg', args);
+  let stderr = '';
+  proc.stderr.on('data', (d) => stderr += d.toString());
+  proc.on('close', () => {
+    const lastBrace = stderr.lastIndexOf('{');
+    const closeBrace = stderr.lastIndexOf('}');
+    if (lastBrace === -1 || closeBrace === -1) {
+      const msg = stderr.includes('no audio') || stderr.includes('does not contain') || stderr.includes('Filter audio')
+        ? 'File has no audio stream to analyze' : 'Failed to analyze volume';
+      return res.status(500).json({ error: msg });
+    }
+    try {
+      const data = JSON.parse(stderr.slice(lastBrace, closeBrace + 1));
+      res.json({
+        inputLoudness: parseFloat(data.input_i),
+        truePeak: parseFloat(data.input_tp),
+        loudnessRange: parseFloat(data.input_lra),
+        threshold: parseFloat(data.input_thresh),
+        targetOffset: parseFloat(data.target_offset),
+      });
+    } catch {
+      res.status(500).json({ error: 'Failed to parse volume analysis' });
+    }
+  });
+});
+
+app.post('/api/volume-normalize', (req, res) => {
+  const { filename, targetLUFS } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const target = targetLUFS || -14;
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  const suffix = target === -14 ? '_boosted' : '_boosted_' + Math.abs(target);
+  const outputFilename = base + suffix + ext;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+  const id = crypto.randomBytes(8).toString('hex');
+
+  activeVolumes.set(id, { progress: 0, status: 'analyzing', filename: outputFilename, error: null });
+  res.json({ id });
+
+  const analyzeArgs = ['-hide_banner', '-i', inputPath, '-af', 'loudnorm=I=' + target + ':TP=-1.5:LRA=11:print_format=json', '-f', 'null', '/dev/null'];
+  const analyzeProc = spawn('ffmpeg', analyzeArgs);
+  let stderr1 = '';
+  analyzeProc.stderr.on('data', (d) => stderr1 += d.toString());
+  analyzeProc.on('close', () => {
+    const vol = activeVolumes.get(id);
+    if (!vol) return;
+
+    const lastBrace = stderr1.lastIndexOf('{');
+    const closeBrace = stderr1.lastIndexOf('}');
+    if (lastBrace === -1 || closeBrace === -1) { vol.status = 'error'; vol.error = 'Volume analysis failed'; return; }
+    let measured;
+    try { measured = JSON.parse(stderr1.slice(lastBrace, closeBrace + 1)); } catch { vol.status = 'error'; vol.error = 'Failed to parse analysis'; return; }
+
+    vol.status = 'normalizing';
+    vol.progress = 10;
+
+    execFile('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', inputPath], { timeout: 10000 }, (err, stdout) => {
+      let totalDuration = 0;
+      if (!err) try { totalDuration = parseFloat(JSON.parse(stdout).format.duration) || 0; } catch {}
+
+      const af = 'loudnorm=I=' + target + ':TP=-1.5:LRA=11:measured_I=' + measured.input_i + ':measured_TP=' + measured.input_tp + ':measured_LRA=' + measured.input_lra + ':measured_thresh=' + measured.input_thresh + ':offset=' + measured.target_offset + ':linear=true';
+      const args = ['-y', '-i', inputPath, '-af', af, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-progress', 'pipe:1', outputPath];
+      const proc = spawn('ffmpeg', args);
+
+      proc.stdout.on('data', (data) => {
+        for (const line of data.toString().split('\n')) {
+          const m = line.match(/out_time_us=(\d+)/);
+          if (m && totalDuration > 0) {
+            const v = activeVolumes.get(id);
+            if (v) v.progress = Math.min(99, 10 + Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 90));
+          }
+        }
+      });
+      proc.stderr.on('data', () => {});
+
+      proc.on('close', (code) => {
+        const v = activeVolumes.get(id);
+        if (!v) return;
+        if (code === 0 && fs.existsSync(outputPath)) {
+          v.progress = 100;
+          v.status = 'complete';
+        } else {
+          v.status = 'error';
+          v.error = 'Volume normalization failed';
+          try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+        }
+      });
+    });
+  });
+});
+
+app.get('/api/volume-progress/:id', (req, res) => {
+  const vol = activeVolumes.get(req.params.id);
+  if (!vol) return res.status(404).json({ error: 'Not found' });
+  res.json({ progress: vol.progress, status: vol.status, filename: vol.filename, error: vol.error });
+  if (vol.status === 'complete' || vol.status === 'error') {
+    setTimeout(() => activeVolumes.delete(req.params.id), DOWNLOAD_TTL_MS);
+  }
+});
+
+// ─── STREAM (for A/B preview) ───
+
+app.get('/api/stream/:filename', (req, res) => {
+  const filename = req.params.filename;
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const filePath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+
+  const stat = fs.statSync(filePath);
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = { '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.webm': 'video/webm', '.ogg': 'audio/ogg', '.aac': 'audio/aac', '.mov': 'video/quicktime' };
+  const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+  const range = req.headers.range;
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+    res.writeHead(206, { 'Content-Range': `bytes ${start}-${end}/${stat.size}`, 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, 'Content-Type': contentType });
+    fs.createReadStream(filePath, { start, end }).pipe(res);
+  } else {
+    res.writeHead(200, { 'Content-Length': stat.size, 'Content-Type': contentType, 'Accept-Ranges': 'bytes' });
+    fs.createReadStream(filePath).pipe(res);
+  }
+});
+
+// ─── VOCAL BOOST ───
+
+app.post('/api/vocal-boost', (req, res) => {
+  const { filename, intensity } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  const outputFilename = base + '_vocal' + ext;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+  const id = crypto.randomBytes(8).toString('hex');
+
+  let af;
+  switch (intensity) {
+    case 'light':
+      af = 'highpass=f=80,acompressor=threshold=0.08:ratio=2.5:attack=10:release=150:makeup=4:knee=8,equalizer=f=2500:t=q:w=1.5:g=2,alimiter=limit=0.89:attack=3:release=50';
+      break;
+    case 'heavy':
+      af = 'highpass=f=100,acompressor=threshold=0.03:ratio=6:attack=3:release=80:makeup=12:knee=4,equalizer=f=2500:t=q:w=1.5:g=5,equalizer=f=200:t=q:w=1:g=-3,alimiter=limit=0.89:attack=3:release=30';
+      break;
+    default:
+      af = 'highpass=f=80,acompressor=threshold=0.05:ratio=4:attack=5:release=100:makeup=8:knee=6,equalizer=f=2500:t=q:w=1.5:g=3,alimiter=limit=0.89:attack=3:release=50';
+  }
+
+  activeVolumes.set(id, { progress: 0, status: 'processing', filename: outputFilename, error: null });
+  res.json({ id });
+
+  execFile('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', inputPath], { timeout: 10000 }, (err, stdout) => {
+    let totalDuration = 0;
+    if (!err) try { totalDuration = parseFloat(JSON.parse(stdout).format.duration) || 0; } catch {}
+
+    const args = ['-y', '-i', inputPath, '-af', af, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-progress', 'pipe:1', outputPath];
+    const proc = spawn('ffmpeg', args);
+
+    proc.stdout.on('data', (data) => {
+      for (const line of data.toString().split('\n')) {
+        const m = line.match(/out_time_us=(\d+)/);
+        if (m && totalDuration > 0) {
+          const v = activeVolumes.get(id);
+          if (v) v.progress = Math.min(99, Math.round((parseInt(m[1]) / 1000000 / totalDuration) * 100));
+        }
+      }
+    });
+    proc.stderr.on('data', () => {});
+
+    proc.on('close', (code) => {
+      const v = activeVolumes.get(id);
+      if (!v) return;
+      if (code === 0 && fs.existsSync(outputPath)) {
+        v.progress = 100;
+        v.status = 'complete';
+      } else {
+        v.status = 'error';
+        v.error = 'Vocal boost failed';
+        try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+      }
+    });
   });
 });
 
