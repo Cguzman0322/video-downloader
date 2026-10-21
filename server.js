@@ -1326,6 +1326,91 @@ app.post('/api/vocal-boost', (req, res) => {
   });
 });
 
+// ─── AI VOCAL (Demucs) ───
+
+const os = require('os');
+
+app.post('/api/ai-vocal', (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: 'Filename is required' });
+  if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
+    return res.status(400).json({ error: 'Invalid filename' });
+
+  const inputPath = path.join(DOWNLOADS_DIR, filename);
+  if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
+
+  const ext = path.extname(filename);
+  const base = path.basename(filename, ext);
+  const outputFilename = base + '_ai_vocal' + ext;
+  const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
+  const id = crypto.randomBytes(8).toString('hex');
+  const tmpDir = path.join(os.tmpdir(), 'demucs_' + id);
+
+  fs.mkdirSync(tmpDir, { recursive: true });
+  activeVolumes.set(id, { progress: 0, status: 'extracting', filename: outputFilename, error: null });
+  res.json({ id });
+
+  const wavPath = path.join(tmpDir, 'input.wav');
+  const extractProc = spawn('ffmpeg', ['-y', '-i', inputPath, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', wavPath]);
+  extractProc.stderr.on('data', () => {});
+
+  extractProc.on('close', (code) => {
+    const v = activeVolumes.get(id);
+    if (!v) return;
+    if (code !== 0) { v.status = 'error'; v.error = 'Audio extraction failed'; return; }
+
+    v.progress = 10; v.status = 'separating';
+
+    const demucsProc = spawn('python3', ['-m', 'demucs', '--two-stems', 'vocals', '-n', 'htdemucs', '--out', path.join(tmpDir, 'output'), wavPath]);
+
+    demucsProc.stderr.on('data', (data) => {
+      const line = data.toString();
+      const m = line.match(/(\d+)%/);
+      if (m && v) v.progress = 10 + Math.round(parseInt(m[1]) * 0.6);
+    });
+    demucsProc.stdout.on('data', () => {});
+
+    demucsProc.on('close', (code2) => {
+      if (!activeVolumes.get(id)) return;
+      const v2 = activeVolumes.get(id);
+      if (code2 !== 0) { v2.status = 'error'; v2.error = 'Vocal separation failed'; return; }
+
+      v2.progress = 75; v2.status = 'remixing';
+
+      const vocalsPath = path.join(tmpDir, 'output', 'htdemucs', 'input', 'vocals.wav');
+      const bgPath = path.join(tmpDir, 'output', 'htdemucs', 'input', 'no_vocals.wav');
+
+      if (!fs.existsSync(vocalsPath) || !fs.existsSync(bgPath)) {
+        v2.status = 'error'; v2.error = 'Separated stems not found'; return;
+      }
+
+      const remixArgs = ['-y', '-i', inputPath, '-i', vocalsPath, '-i', bgPath,
+        '-filter_complex',
+        '[1:a]acompressor=threshold=0.05:ratio=4:attack=5:release=100:makeup=8:knee=6,equalizer=f=2500:t=q:w=1.5:g=3[boosted_vocals];[boosted_vocals][2:a]amix=inputs=2:duration=first:weights=1 0.7:normalize=0[mixed];[mixed]alimiter=limit=0.89:attack=3:release=50[out]',
+        '-map', '0:v', '-map', '[out]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', outputPath];
+      const remixProc = spawn('ffmpeg', remixArgs);
+
+      remixProc.stderr.on('data', () => {});
+      remixProc.stdout.on('data', () => {});
+
+      remixProc.on('close', (code3) => {
+        const v3 = activeVolumes.get(id);
+        if (!v3) return;
+
+        // Clean up temp files
+        try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+
+        if (code3 === 0 && fs.existsSync(outputPath)) {
+          v3.progress = 100; v3.status = 'complete';
+        } else {
+          v3.status = 'error'; v3.error = 'Remix failed';
+          try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch {}
+        }
+      });
+    });
+  });
+});
+
 const PORT = 3456;
 app.listen(PORT, () => {
   console.log(`Video Downloader running at http://localhost:${PORT}`);

@@ -1647,6 +1647,7 @@
         <span class="chip-label">Mode</span>
         <button class="chip active" data-mode="normalize" onclick="pickVolumeMode(this)">Normalize</button>
         <button class="chip" data-mode="vocal" onclick="pickVolumeMode(this)">Vocal Boost</button>
+        <button class="chip" data-mode="ai-vocal" onclick="pickVolumeMode(this)">AI Vocal</button>
       </div>
       <div class="chip-row" id="volumeTargetRow">
         <span class="chip-label">Target</span>
@@ -2346,7 +2347,7 @@
             if (isOver30) btns += '<button class="action-btn primary" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this, 30)">Meta 30MB</button>';
             btns += '<button class="action-btn" onclick="shrinkFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Shrink</button>';
             if (!isBoosted) btns += '<button class="action-btn" onclick="boostFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Boost</button>';
-            if (!f.name.includes('_vocal.')) btns += '<button class="action-btn" onclick="vocalBoostFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Vocal</button>';
+            if (!f.name.includes('_vocal.') && !f.name.includes('_ai_vocal.')) btns += '<button class="action-btn" onclick="vocalBoostFile(\'' + safe.replace(/'/g, "\\'") + '\', this)">Vocal</button>';
             if (!isCut) btns += '<button class="action-btn accent-soft" onclick="analyzeFromDownload(\'' + safe.replace(/'/g, "\\'") + '\', this)">Analyze</button>';
           }
           d.innerHTML = '<div class="dl-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="9,5 19,12 9,19"/></svg></div>' +
@@ -2588,7 +2589,12 @@
       const card = document.getElementById('volumeCard');
       const badge = document.querySelector('#tab-volume .tool-badge');
       card.classList.remove('visible');
-      if (volumeMode === 'vocal') {
+      if (volumeMode === 'ai-vocal') {
+        targetRow.style.display = 'none'; intensityRow.style.display = 'none';
+        badge.textContent = 'AI';
+        document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
+        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; AI separates voice from background &middot; ~30s';
+      } else if (volumeMode === 'vocal') {
         targetRow.style.display = 'none'; intensityRow.style.display = '';
         badge.textContent = 'VOCAL';
         document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
@@ -2611,8 +2617,8 @@
     const volumeFileInput = document.getElementById('volumeFile');
     volumeZone.addEventListener('dragover', (e) => { e.preventDefault(); volumeZone.classList.add('drag-over'); });
     volumeZone.addEventListener('dragleave', () => volumeZone.classList.remove('drag-over'));
-    volumeZone.addEventListener('drop', (e) => { e.preventDefault(); volumeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(e.dataTransfer.files[0]); else uploadAndAnalyzeVolume(e.dataTransfer.files[0]); } });
-    volumeFileInput.addEventListener('change', () => { if (volumeFileInput.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(volumeFileInput.files[0]); else uploadAndAnalyzeVolume(volumeFileInput.files[0]); } volumeFileInput.value = ''; });
+    volumeZone.addEventListener('drop', (e) => { e.preventDefault(); volumeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { if (volumeMode === 'ai-vocal') uploadAndAiVocal(e.dataTransfer.files[0]); else if (volumeMode === 'vocal') uploadAndVocalBoost(e.dataTransfer.files[0]); else uploadAndAnalyzeVolume(e.dataTransfer.files[0]); } });
+    volumeFileInput.addEventListener('change', () => { if (volumeFileInput.files[0]) { if (volumeMode === 'ai-vocal') uploadAndAiVocal(volumeFileInput.files[0]); else if (volumeMode === 'vocal') uploadAndVocalBoost(volumeFileInput.files[0]); else uploadAndAnalyzeVolume(volumeFileInput.files[0]); } volumeFileInput.value = ''; });
 
     async function uploadAndAnalyzeVolume(file) {
       const prog = document.getElementById('volumeProgress');
@@ -2753,6 +2759,52 @@
       } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
     }
 
+    async function uploadAndAiVocal(file) {
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+
+      document.getElementById('volumeCard').classList.remove('visible');
+      document.getElementById('volumeCompare').classList.remove('visible');
+      prog.classList.add('visible');
+      label.textContent = 'Uploading ' + file.name + '...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+
+      try {
+        const formData = new FormData(); formData.append('file', file);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = p + '%'; bar.style.width = p + '%'; });
+
+        label.textContent = 'AI separating vocals...';
+        pct.textContent = '0%'; bar.style.width = '0%';
+
+        const res = await fetch('/api/ai-vocal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: uploadRes.filename }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const statusLabels = { extracting: 'Extracting audio...', separating: 'AI separating vocals...', remixing: 'Remixing audio...', complete: 'Done' };
+
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            bar.style.width = d.progress + '%'; pct.textContent = Math.round(d.progress) + '%';
+            label.textContent = statusLabels[d.status] || d.status;
+            if (d.status === 'complete') {
+              clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%';
+              label.textContent = d.filename;
+              result.innerHTML = '<strong>AI Vocal processing complete</strong>';
+              loadDownloads();
+              showVocalCompare(uploadRes.filename, d.filename, 'AI', 'ai-vocal');
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'AI vocal processing failed', 'error'); prog.classList.remove('visible');
+            }
+          } catch { clearInterval(iv); }
+        }, 1000);
+      } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
+    }
+
     async function runVocalBoost(filename, intensity) {
       const prog = document.getElementById('volumeProgress');
       const label = document.getElementById('volumeLabel');
@@ -2824,9 +2876,9 @@
 
       compareSource = 'processed';
       document.getElementById('compareToggle').checked = true;
-      document.getElementById('compareTag').textContent = compareMode === 'vocal' ? intensity.toUpperCase() : intensity;
+      document.getElementById('compareTag').textContent = compareMode === 'ai-vocal' ? 'AI' : (compareMode === 'vocal' ? intensity.toUpperCase() : intensity);
       document.getElementById('compareFilename').textContent = originalFile;
-      document.getElementById('compareLabelProc').textContent = compareMode === 'vocal' ? 'Vocal Boost' : 'Normalized';
+      document.getElementById('compareLabelProc').textContent = compareMode === 'ai-vocal' ? 'AI Vocal' : (compareMode === 'vocal' ? 'Vocal Boost' : 'Normalized');
       document.getElementById('comparePlayIcon').style.display = '';
       document.getElementById('comparePauseIcon').style.display = 'none';
       document.getElementById('compareSeek').value = 0;
@@ -2839,8 +2891,8 @@
       orig.onended = resetPlay;
       proc.onended = resetPlay;
 
-      document.getElementById('compareIntensityRow').style.display = compareMode === 'vocal' ? '' : 'none';
-      document.getElementById('reprocessBtn').style.display = compareMode === 'vocal' ? '' : 'none';
+      document.getElementById('compareIntensityRow').style.display = (compareMode === 'vocal') ? '' : 'none';
+      document.getElementById('reprocessBtn').style.display = (compareMode === 'vocal') ? '' : 'none';
       if (compareMode === 'vocal') {
         document.querySelectorAll('#compareIntensityRow .chip').forEach(el => {
           el.classList.toggle('active', el.dataset.intensity === intensity);
