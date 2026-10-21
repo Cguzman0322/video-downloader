@@ -2853,44 +2853,60 @@
       document.getElementById('volumeCompare').classList.add('visible');
     }
 
+    function pauseBothAudio() {
+      document.getElementById('compareOriginal').pause();
+      document.getElementById('compareProcessed').pause();
+    }
+
     function toggleComparePlay() {
+      const orig = document.getElementById('compareOriginal');
+      const proc = document.getElementById('compareProcessed');
       const a = getActiveCompareAudio();
+      const inactive = compareSource === 'original' ? proc : orig;
       if (a.paused) {
+        inactive.pause();
         a.play();
         document.getElementById('comparePlayIcon').style.display = 'none';
         document.getElementById('comparePauseIcon').style.display = '';
       } else {
-        a.pause();
+        pauseBothAudio();
         document.getElementById('comparePlayIcon').style.display = '';
         document.getElementById('comparePauseIcon').style.display = 'none';
       }
     }
 
     function seekCompare(val) {
+      const orig = document.getElementById('compareOriginal');
+      const proc = document.getElementById('compareProcessed');
       const a = getActiveCompareAudio();
       if (a.duration) {
         const t = (val / 100) * a.duration;
-        a.currentTime = t;
-        const other = document.getElementById(compareSource === 'original' ? 'compareProcessed' : 'compareOriginal');
-        other.currentTime = t;
+        orig.currentTime = t;
+        proc.currentTime = t;
       }
     }
 
+    let compareSwitching = false;
     function toggleCompareSource() {
+      if (compareSwitching) return;
+      compareSwitching = true;
+      const orig = document.getElementById('compareOriginal');
+      const proc = document.getElementById('compareProcessed');
       const wasPlaying = !getActiveCompareAudio().paused;
       const ct = getActiveCompareAudio().currentTime;
-      getActiveCompareAudio().pause();
+      pauseBothAudio();
 
       compareSource = document.getElementById('compareToggle').checked ? 'processed' : 'original';
-      const next = getActiveCompareAudio();
-      next.currentTime = ct;
-      if (wasPlaying) next.play();
+      orig.currentTime = ct;
+      proc.currentTime = ct;
+      if (wasPlaying) getActiveCompareAudio().play();
       updateToggleLabels();
+      compareSwitching = false;
     }
 
     function setCompareSource(src) {
+      if (compareSource === src) return;
       const toggle = document.getElementById('compareToggle');
-      if ((src === 'processed') === toggle.checked) return;
       toggle.checked = src === 'processed';
       toggleCompareSource();
     }
