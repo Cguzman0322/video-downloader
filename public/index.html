@@ -2813,8 +2813,10 @@
       const t = Date.now();
       const orig = document.getElementById('compareOriginal');
       const proc = document.getElementById('compareProcessed');
+      orig.pause(); proc.pause();
       orig.src = '/api/stream/' + encodeURIComponent(originalFile) + '?t=' + t;
       proc.src = '/api/stream/' + encodeURIComponent(processedFile) + '?t=' + t;
+      orig.load(); proc.load();
 
       compareSource = 'processed';
       document.getElementById('compareToggle').checked = true;
