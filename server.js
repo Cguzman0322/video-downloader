@@ -1363,8 +1363,10 @@ app.post('/api/ai-vocal', (req, res) => {
 
     const demucsProc = spawn('python3', ['-m', 'demucs', '--two-stems', 'vocals', '-n', 'htdemucs', '--out', path.join(tmpDir, 'output'), wavPath]);
 
+    let demucsStderr = '';
     demucsProc.stderr.on('data', (data) => {
       const line = data.toString();
+      demucsStderr += line;
       const m = line.match(/(\d+)%/);
       if (m && v) v.progress = 10 + Math.round(parseInt(m[1]) * 0.6);
     });
@@ -1373,7 +1375,7 @@ app.post('/api/ai-vocal', (req, res) => {
     demucsProc.on('close', (code2) => {
       if (!activeVolumes.get(id)) return;
       const v2 = activeVolumes.get(id);
-      if (code2 !== 0) { v2.status = 'error'; v2.error = 'Vocal separation failed'; return; }
+      if (code2 !== 0) { console.error('[ai-vocal] demucs failed, code=' + code2 + ', stderr:', demucsStderr.slice(-500)); v2.status = 'error'; v2.error = 'Vocal separation failed'; return; }
 
       v2.progress = 75; v2.status = 'remixing';
 

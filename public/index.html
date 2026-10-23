@@ -1647,7 +1647,6 @@
         <span class="chip-label">Mode</span>
         <button class="chip active" data-mode="normalize" onclick="pickVolumeMode(this)">Normalize</button>
         <button class="chip" data-mode="vocal" onclick="pickVolumeMode(this)">Vocal Boost</button>
-        <button class="chip" data-mode="ai-vocal" onclick="pickVolumeMode(this)">AI Vocal</button>
       </div>
       <div class="chip-row" id="volumeTargetRow">
         <span class="chip-label">Target</span>
@@ -1660,6 +1659,7 @@
         <button class="chip" data-intensity="light" onclick="pickIntensity(this)">Light</button>
         <button class="chip active" data-intensity="medium" onclick="pickIntensity(this)">Medium</button>
         <button class="chip" data-intensity="heavy" onclick="pickIntensity(this)">Heavy</button>
+        <button class="chip" data-intensity="ai" onclick="pickIntensity(this)">AI Vocal</button>
       </div>
       <div class="drop-zone" id="volumeZone" onclick="document.getElementById('volumeFile').click()">
         <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"/></svg></div>
@@ -1716,9 +1716,10 @@
           <button class="chip" data-intensity="light" onclick="pickCompareIntensity(this)">Light</button>
           <button class="chip active" data-intensity="medium" onclick="pickCompareIntensity(this)">Medium</button>
           <button class="chip" data-intensity="heavy" onclick="pickCompareIntensity(this)">Heavy</button>
+          <button class="chip" data-intensity="ai" onclick="pickCompareIntensity(this)">AI Vocal</button>
         </div>
         <div class="compare-actions">
-          <button class="reprocess-btn" id="reprocessBtn" onclick="reprocessVocal()">Re-process with new intensity</button>
+          <button class="reprocess-btn" id="reprocessBtn" onclick="reprocessVocal()">Re-process</button>
           <a class="normalize-btn" id="compareDownloadBtn" style="text-decoration:none;flex:1" download>Download</a>
         </div>
       </div>
@@ -2589,12 +2590,7 @@
       const card = document.getElementById('volumeCard');
       const badge = document.querySelector('#tab-volume .tool-badge');
       card.classList.remove('visible');
-      if (volumeMode === 'ai-vocal') {
-        targetRow.style.display = 'none'; intensityRow.style.display = 'none';
-        badge.textContent = 'AI';
-        document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
-        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; AI separates voice from background &middot; ~30s';
-      } else if (volumeMode === 'vocal') {
+      if (volumeMode === 'vocal') {
         targetRow.style.display = 'none'; intensityRow.style.display = '';
         badge.textContent = 'VOCAL';
         document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
@@ -2611,14 +2607,23 @@
       document.querySelectorAll('#vocalIntensityRow .chip').forEach(el => el.classList.remove('active'));
       btn.classList.add('active');
       vocalIntensity = btn.dataset.intensity;
+      if (vocalIntensity === 'ai') {
+        document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
+        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; AI separates voice from background &middot; ~30s';
+        document.querySelector('#tab-volume .tool-badge').textContent = 'AI';
+      } else {
+        document.getElementById('volumeZoneTitle').textContent = 'Drop a video with dialogue';
+        document.getElementById('volumeZoneDesc').innerHTML = 'or click to browse &middot; Compress &amp; boost vocals over background noise';
+        document.querySelector('#tab-volume .tool-badge').textContent = 'VOCAL';
+      }
     }
 
     const volumeZone = document.getElementById('volumeZone');
     const volumeFileInput = document.getElementById('volumeFile');
     volumeZone.addEventListener('dragover', (e) => { e.preventDefault(); volumeZone.classList.add('drag-over'); });
     volumeZone.addEventListener('dragleave', () => volumeZone.classList.remove('drag-over'));
-    volumeZone.addEventListener('drop', (e) => { e.preventDefault(); volumeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { if (volumeMode === 'ai-vocal') uploadAndAiVocal(e.dataTransfer.files[0]); else if (volumeMode === 'vocal') uploadAndVocalBoost(e.dataTransfer.files[0]); else uploadAndAnalyzeVolume(e.dataTransfer.files[0]); } });
-    volumeFileInput.addEventListener('change', () => { if (volumeFileInput.files[0]) { if (volumeMode === 'ai-vocal') uploadAndAiVocal(volumeFileInput.files[0]); else if (volumeMode === 'vocal') uploadAndVocalBoost(volumeFileInput.files[0]); else uploadAndAnalyzeVolume(volumeFileInput.files[0]); } volumeFileInput.value = ''; });
+    volumeZone.addEventListener('drop', (e) => { e.preventDefault(); volumeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(e.dataTransfer.files[0]); else uploadAndAnalyzeVolume(e.dataTransfer.files[0]); } });
+    volumeFileInput.addEventListener('change', () => { if (volumeFileInput.files[0]) { if (volumeMode === 'vocal') uploadAndVocalBoost(volumeFileInput.files[0]); else uploadAndAnalyzeVolume(volumeFileInput.files[0]); } volumeFileInput.value = ''; });
 
     async function uploadAndAnalyzeVolume(file) {
       const prog = document.getElementById('volumeProgress');
@@ -2755,7 +2760,11 @@
 
         vocalSourceFile = uploadRes.filename;
         compareIntensity = vocalIntensity;
-        runVocalBoost(uploadRes.filename, vocalIntensity);
+        if (vocalIntensity === 'ai') {
+          runAiVocal(uploadRes.filename);
+        } else {
+          runVocalBoost(uploadRes.filename, vocalIntensity);
+        }
       } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
     }
 
@@ -2776,6 +2785,7 @@
         const formData = new FormData(); formData.append('file', file);
         const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = p + '%'; bar.style.width = p + '%'; });
 
+        vocalSourceFile = uploadRes.filename;
         label.textContent = 'AI separating vocals...';
         pct.textContent = '0%'; bar.style.width = '0%';
 
@@ -2811,11 +2821,13 @@
       const pct = document.getElementById('volumePct');
       const bar = document.getElementById('volumeBar');
       const result = document.getElementById('volumeResult');
+      const compare = document.getElementById('volumeCompare');
+      const wasCompareVisible = compare.classList.contains('visible');
 
       prog.classList.add('visible');
       label.textContent = 'Boosting vocals (' + intensity + ')...';
       pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
-      document.getElementById('volumeCompare').classList.remove('visible');
+      compare.classList.remove('visible');
 
       try {
         const res = await fetch('/api/vocal-boost', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, intensity }) });
@@ -2836,10 +2848,11 @@
               showVocalCompare(filename, d.filename, intensity);
             } else if (d.status === 'error') {
               clearInterval(iv); showToast(d.error || 'Vocal boost failed', 'error'); prog.classList.remove('visible');
+              if (wasCompareVisible) compare.classList.add('visible');
             }
           } catch { clearInterval(iv); }
         }, 500);
-      } catch (e) { showToast(e.message || 'Vocal boost failed', 'error'); prog.classList.remove('visible'); }
+      } catch (e) { showToast(e.message || 'Vocal boost failed', 'error'); prog.classList.remove('visible'); if (wasCompareVisible) compare.classList.add('visible'); }
     }
 
     let compareSource = 'processed';
@@ -2891,18 +2904,29 @@
       orig.onended = resetPlay;
       proc.onended = resetPlay;
 
-      document.getElementById('compareIntensityRow').style.display = (compareMode === 'vocal') ? '' : 'none';
-      document.getElementById('reprocessBtn').style.display = (compareMode === 'vocal') ? '' : 'none';
-      if (compareMode === 'vocal') {
+      document.getElementById('compareIntensityRow').style.display = (compareMode === 'vocal' || compareMode === 'ai-vocal') ? '' : 'none';
+      document.getElementById('reprocessBtn').style.display = (compareMode === 'vocal' || compareMode === 'ai-vocal') ? '' : 'none';
+      if (compareMode === 'vocal' || compareMode === 'ai-vocal') {
+        const activeIntensity = compareMode === 'ai-vocal' ? 'ai' : intensity;
         document.querySelectorAll('#compareIntensityRow .chip').forEach(el => {
-          el.classList.toggle('active', el.dataset.intensity === intensity);
+          el.classList.toggle('active', el.dataset.intensity === activeIntensity);
         });
       }
       const dlBtn = document.getElementById('compareDownloadBtn');
       dlBtn.href = '/api/stream/' + encodeURIComponent(processedFile);
       dlBtn.download = processedFile;
 
-      document.getElementById('volumeCompare').classList.add('visible');
+      const compareEl = document.getElementById('volumeCompare');
+      compareEl.classList.add('visible');
+      setTimeout(() => compareEl.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+
+      const initTime = () => {
+        const a = getActiveCompareAudio();
+        if (a.duration && isFinite(a.duration)) {
+          document.getElementById('compareTime').textContent = '0:00 / ' + fmtAudioTime(a.duration);
+        }
+      };
+      proc.addEventListener('loadedmetadata', initTime, { once: true });
     }
 
     function pauseBothAudio() {
@@ -2978,7 +3002,53 @@
       if (!vocalSourceFile) return;
       document.getElementById('compareOriginal').pause();
       document.getElementById('compareProcessed').pause();
-      runVocalBoost(vocalSourceFile, compareIntensity);
+      if (compareIntensity === 'ai') {
+        runAiVocal(vocalSourceFile);
+      } else {
+        runVocalBoost(vocalSourceFile, compareIntensity);
+      }
+    }
+
+    async function runAiVocal(filename) {
+      const prog = document.getElementById('volumeProgress');
+      const label = document.getElementById('volumeLabel');
+      const pct = document.getElementById('volumePct');
+      const bar = document.getElementById('volumeBar');
+      const result = document.getElementById('volumeResult');
+      const compare = document.getElementById('volumeCompare');
+      const wasCompareVisible = compare.classList.contains('visible');
+
+      prog.classList.add('visible');
+      label.textContent = 'AI separating vocals...';
+      pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
+      compare.classList.remove('visible');
+
+      try {
+        const res = await fetch('/api/ai-vocal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        const statusLabels = { extracting: 'Extracting audio...', separating: 'AI separating vocals...', remixing: 'Remixing audio...', complete: 'Done' };
+
+        const iv = setInterval(async () => {
+          try {
+            const pr = await fetch('/api/volume-progress/' + data.id);
+            const d = await pr.json();
+            bar.style.width = d.progress + '%'; pct.textContent = Math.round(d.progress) + '%';
+            label.textContent = statusLabels[d.status] || d.status;
+            if (d.status === 'complete') {
+              clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%';
+              label.textContent = d.filename;
+              result.innerHTML = '<strong>AI Vocal processing complete</strong>';
+              loadDownloads();
+              showVocalCompare(filename, d.filename, 'AI', 'ai-vocal');
+            } else if (d.status === 'error') {
+              clearInterval(iv); showToast(d.error || 'AI vocal processing failed', 'error'); prog.classList.remove('visible');
+              if (wasCompareVisible) compare.classList.add('visible');
+            }
+          } catch { clearInterval(iv); }
+        }, 1000);
+      } catch (e) { showToast(e.message || 'AI vocal failed', 'error'); prog.classList.remove('visible'); if (wasCompareVisible) compare.classList.add('visible'); }
     }
 
     async function vocalBoostFile(filename, btn) {
@@ -3002,7 +3072,11 @@
               clearInterval(iv);
               prog.querySelector('.progress-label').textContent = d.filename;
               prog.querySelector('.progress-result').innerHTML = '<strong>Vocals boosted</strong>';
-              setTimeout(() => { prog.remove(); loadDownloads(); }, 3500);
+              vocalSourceFile = filename;
+              loadDownloads();
+              switchTab('volume');
+              showVocalCompare(filename, d.filename, 'medium');
+              setTimeout(() => { prog.remove(); }, 2000);
             } else if (d.status === 'error') {
               clearInterval(iv); showToast(d.error || 'Vocal boost failed', 'error');
               prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = 'Vocal';
@@ -3035,7 +3109,10 @@
               clearInterval(iv);
               prog.querySelector('.progress-label').textContent = d.filename;
               prog.querySelector('.progress-result').innerHTML = '<strong>Boosted to -14 LUFS</strong>';
-              setTimeout(() => { prog.remove(); loadDownloads(); }, 3500);
+              loadDownloads();
+              switchTab('volume');
+              showVocalCompare(filename, d.filename, '-14 LUFS', 'normalize');
+              setTimeout(() => { prog.remove(); }, 2000);
             } else if (d.status === 'error') {
               clearInterval(iv); showToast(d.error || 'Boost failed', 'error');
               prog.remove(); btn.style.display = ''; btn.disabled = false; btn.textContent = 'Boost';
