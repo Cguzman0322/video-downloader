@@ -1419,6 +1419,147 @@
       *, *::before, *::after { transition: none !important; animation: none !important; }
       .aurora-blob { opacity: 0.06 !important; animation: none !important; }
     }
+
+    /* ─── RESIZE EDITOR ─── */
+    .rz-editor { display: none; margin-top: 16px; }
+    .rz-editor.visible { display: block; }
+    .rz-layout { display: grid; grid-template-columns: minmax(200px, 360px) 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 700px) { .rz-layout { grid-template-columns: 1fr; } }
+
+    .rz-preview-col { display: flex; flex-direction: column; gap: 12px; }
+    .rz-size-tabs { display: flex; gap: 4px; }
+    .rz-size-tab {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--fg-muted); cursor: pointer; transition: all 0.15s;
+    }
+    .rz-size-tab.active { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 700; }
+    .rz-size-tab:hover:not(.active) { background: var(--surface-hover); }
+
+    .rz-preview-wrap {
+      position: relative; background: #000; border-radius: 12px; overflow: hidden;
+      box-shadow: var(--shadow); max-width: 360px;
+    }
+    .rz-preview-inner {
+      position: relative; overflow: hidden; width: 100%;
+    }
+    .rz-preview-inner video {
+      display: block;
+    }
+    .rz-preview-inner video.rz-crop-video {
+      position: absolute; top: 0; left: 0; pointer-events: none;
+    }
+    .rz-preview-inner video.rz-blur-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; filter: blur(20px) brightness(0.5);
+      transform: scale(1.15); pointer-events: none;
+    }
+    .rz-preview-inner video.rz-blur-fg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: contain; z-index: 1; pointer-events: none;
+    }
+    .rz-preview-inner.crop-mode { cursor: grab; }
+    .rz-preview-inner.crop-mode.dragging { cursor: grabbing; }
+
+    .rz-safe {
+      position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none;
+      background: rgba(255, 50, 50, 0.22); display: none;
+      border: 1px dashed rgba(255, 80, 80, 0.4);
+    }
+    .rz-safe.visible { display: block; }
+    .rz-safe-top { top: 0; border-top: none; }
+    .rz-safe-bot { bottom: 0; border-bottom: none; }
+    .rz-safe-label {
+      position: absolute; bottom: 3px; right: 6px;
+      font-size: 9px; font-weight: 600; color: rgba(255,120,120,0.7);
+      font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .rz-drag-hint {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      font-size: 11px; font-weight: 600; color: #fff; background: rgba(0,0,0,0.55);
+      padding: 4px 12px; border-radius: 100px; z-index: 4; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .rz-preview-inner.crop-mode:hover .rz-drag-hint { opacity: 1; }
+    .rz-preview-inner.crop-mode.dragging .rz-drag-hint { opacity: 0; }
+
+    .rz-zoom { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+    .rz-zoom-label { font-size: 12px; font-weight: 600; color: var(--fg-muted); white-space: nowrap; }
+    .rz-zoom input[type="range"] { flex: 1; accent-color: var(--accent); height: 4px; }
+    .rz-zoom-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); min-width: 36px; text-align: right; }
+
+    .rz-scrubber { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+    .rz-play-btn {
+      width: 30px; height: 30px; border-radius: 50%; border: none;
+      background: var(--accent); color: var(--accent-fg);
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .rz-play-btn:hover { background: var(--accent-hover); }
+    .rz-play-btn svg { pointer-events: none; }
+    .rz-timeline { flex: 1; accent-color: var(--accent); height: 4px; }
+    .rz-time {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--fg-muted); white-space: nowrap; min-width: 80px; text-align: right;
+    }
+    .rz-reset-row { display: flex; padding: 0 4px; }
+    .rz-reset-btn {
+      font-family: inherit; font-size: 11px; font-weight: 600;
+      color: var(--fg-muted); background: transparent; border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 14px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .rz-reset-btn:hover { background: var(--surface-hover); color: var(--fg); }
+
+    .rz-controls { display: flex; flex-direction: column; gap: 16px; }
+    .rz-filename { font-size: 13px; font-weight: 600; color: var(--fg); word-break: break-all; }
+    .rz-video-dims { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-muted); margin-top: 2px; }
+    .rz-group { display: flex; flex-direction: column; gap: 2px; }
+    .rz-group-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--fg-subtle); margin-bottom: 4px; padding-left: 2px;
+    }
+    .rz-check, .rz-radio {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background 0.12s;
+      font-size: 13px; font-weight: 500;
+    }
+    .rz-check:hover, .rz-radio:hover { background: var(--surface-hover); }
+    .rz-check input, .rz-radio input { accent-color: var(--accent); margin: 0; flex-shrink: 0; }
+    .rz-check-dim {
+      margin-left: auto; font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--fg-subtle);
+    }
+
+    .rz-export-btn {
+      font-family: inherit; font-size: 14px; font-weight: 700;
+      color: var(--accent-fg); background: var(--accent); border: none;
+      border-radius: 100px; padding: 12px 24px; cursor: pointer;
+      transition: background 0.15s; width: 100%; margin-top: 4px;
+    }
+    .rz-export-btn:hover { background: var(--accent-hover); }
+    .rz-export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .rz-change-btn {
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      color: var(--fg-muted); background: transparent; border: 1px solid var(--border);
+      border-radius: 100px; padding: 8px 16px; cursor: pointer;
+      transition: all 0.15s; width: 100%;
+    }
+    .rz-change-btn:hover { background: var(--surface-hover); color: var(--fg); }
+
+    .rz-export-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; margin-top: 8px;
+    }
+    .rz-export-item .progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .rz-export-item .progress-label { font-size: 12px; font-weight: 600; }
+    .rz-export-item .progress-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); }
+    .rz-export-item .bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .rz-export-item .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; width: 0%; }
+    .rz-export-item .progress-result { font-size: 11px; color: var(--fg-muted); margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -1567,22 +1708,68 @@
     <!-- ─── RESIZE TAB ─── -->
     <section class="tab-content" id="tab-resize">
       <div class="tool-header">
-        <h2>Resize for Instagram</h2>
+        <h2>Resize for Meta Ads</h2>
         <span class="tool-badge">1080p</span>
-      </div>
-      <div class="chip-row">
-        <span class="chip-label">Preset</span>
-        <button class="chip active" data-preset="reels" onclick="pickPreset(this)">Reels 9:16</button>
-        <button class="chip" data-preset="portrait" onclick="pickPreset(this)">Portrait 4:5</button>
-        <button class="chip" data-preset="square" onclick="pickPreset(this)">Square 1:1</button>
-        <button class="chip" data-preset="landscape" onclick="pickPreset(this)">Landscape 1.91:1</button>
       </div>
       <div class="drop-zone" id="resizeZone" onclick="document.getElementById('resizeFile').click()">
         <div class="drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M15 2v20M9 2v20M2 12h20"/></svg></div>
         <h4>Drop a video to resize</h4>
-        <p>or click to browse &middot; Blurred background fill for any aspect ratio</p>
+        <p>or click to browse &middot; Export multiple sizes at once</p>
       </div>
       <input type="file" id="resizeFile" accept="video/*" style="display:none">
+
+      <div id="resizeEditor" class="rz-editor">
+        <div class="rz-layout">
+          <div class="rz-preview-col">
+            <div class="rz-size-tabs" id="rzSizeTabs"></div>
+            <div class="rz-preview-wrap">
+              <div class="rz-preview-inner crop-mode" id="rzPreviewInner">
+                <video id="rzCropVideo" class="rz-crop-video" muted playsinline></video>
+                <video id="rzBlurBg" class="rz-blur-bg" muted playsinline style="display:none"></video>
+                <video id="rzBlurFg" class="rz-blur-fg" muted playsinline style="display:none"></video>
+                <div class="rz-safe rz-safe-top" id="rzSafeTop"><span class="rz-safe-label">UI zone</span></div>
+                <div class="rz-safe rz-safe-bot" id="rzSafeBot"><span class="rz-safe-label">UI zone</span></div>
+                <div class="rz-drag-hint" id="rzDragHint">Drag to reposition</div>
+              </div>
+            </div>
+            <div class="rz-scrubber">
+              <button class="rz-play-btn" id="rzPlayBtn" onclick="rzTogglePlay()"><svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><polygon points="0,0 12,7 0,14"/></svg></button>
+              <input type="range" class="rz-timeline" id="rzTimeline" min="0" max="1000" value="0" step="1">
+              <span class="rz-time" id="rzTime">0:00 / 0:00</span>
+            </div>
+            <div class="rz-zoom" id="rzZoomRow">
+              <span class="rz-zoom-label">Zoom</span>
+              <input type="range" id="rzZoomSlider" min="100" max="300" value="100" step="1">
+              <span class="rz-zoom-val" id="rzZoomVal">1.0&times;</span>
+            </div>
+            <div class="rz-reset-row">
+              <button class="rz-reset-btn" onclick="rzResetPosition()">Reset position</button>
+            </div>
+          </div>
+          <div class="rz-controls">
+            <div>
+              <div class="rz-filename" id="rzFilename"></div>
+              <div class="rz-video-dims" id="rzVideoDims"></div>
+            </div>
+            <div class="rz-group">
+              <div class="rz-group-title">Export Sizes</div>
+              <label class="rz-check" data-size="vertical"><input type="checkbox" checked><span>9:16 Vertical</span><span class="rz-check-dim">1080&times;1920</span></label>
+              <label class="rz-check" data-size="portrait"><input type="checkbox"><span>4:5 Portrait</span><span class="rz-check-dim">1080&times;1350</span></label>
+              <label class="rz-check" data-size="square"><input type="checkbox"><span>1:1 Square</span><span class="rz-check-dim">1080&times;1080</span></label>
+            </div>
+            <div class="rz-group">
+              <div class="rz-group-title">Fill Mode</div>
+              <label class="rz-radio"><input type="radio" name="rzFillMode" value="crop" checked><span>Crop to fill</span></label>
+              <label class="rz-radio"><input type="radio" name="rzFillMode" value="blur"><span>Fit with blurred background</span></label>
+            </div>
+            <label class="rz-check" style="margin-top:4px"><input type="checkbox" id="rzSafeToggle"><span>Show safe areas</span></label>
+            <button class="rz-export-btn" id="rzExportBtn" onclick="rzExport()">Export Selected Sizes</button>
+            <button class="rz-change-btn" onclick="rzChangeVideo()">Change Video</button>
+          </div>
+        </div>
+        <div id="rzExportProgress"></div>
+      </div>
+
       <div class="tool-progress" id="resizeProgress">
         <div class="progress-top"><span class="progress-label" id="resizeLabel">Resizing...</span><span class="progress-pct" id="resizePct">0%</span></div>
         <div class="bar-track"><div class="bar-fill" id="resizeBar"></div></div>
@@ -2189,17 +2376,25 @@
     }
 
     // ─── RESIZE ───
-    let resizePreset = 'reels';
-    function pickPreset(btn) { document.querySelectorAll('#tab-resize .chip').forEach(el => el.classList.remove('active')); btn.classList.add('active'); resizePreset = btn.dataset.preset; }
+    const RZ_PRESETS = {
+      vertical: { w: 1080, h: 1920, label: '9:16', safeTop: 0.14, safeBot: 0.20 },
+      portrait: { w: 1080, h: 1350, label: '4:5', safeTop: 0.10, safeBot: 0.10 },
+      square:   { w: 1080, h: 1080, label: '1:1', safeTop: 0.10, safeBot: 0.10 },
+    };
+    const rzState = {
+      filename: null, blobUrl: null, videoW: 0, videoH: 0,
+      previewSize: 'vertical', fillMode: 'crop',
+      sizes: { vertical: { cropX: 0.5, cropY: 0.5, zoom: 1 }, portrait: { cropX: 0.5, cropY: 0.5, zoom: 1 }, square: { cropX: 0.5, cropY: 0.5, zoom: 1 } },
+    };
 
     const resizeZone = document.getElementById('resizeZone');
     const resizeFileInput = document.getElementById('resizeFile');
     resizeZone.addEventListener('dragover', (e) => { e.preventDefault(); resizeZone.classList.add('drag-over'); });
     resizeZone.addEventListener('dragleave', () => resizeZone.classList.remove('drag-over'));
-    resizeZone.addEventListener('drop', (e) => { e.preventDefault(); resizeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) uploadAndResize(e.dataTransfer.files[0]); });
-    resizeFileInput.addEventListener('change', () => { if (resizeFileInput.files[0]) uploadAndResize(resizeFileInput.files[0]); resizeFileInput.value = ''; });
+    resizeZone.addEventListener('drop', (e) => { e.preventDefault(); resizeZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) rzLoadVideo(e.dataTransfer.files[0]); });
+    resizeFileInput.addEventListener('change', () => { if (resizeFileInput.files[0]) rzLoadVideo(resizeFileInput.files[0]); resizeFileInput.value = ''; });
 
-    async function uploadAndResize(file) {
+    async function rzLoadVideo(file) {
       const prog = document.getElementById('resizeProgress');
       const label = document.getElementById('resizeLabel');
       const pct = document.getElementById('resizePct');
@@ -2208,15 +2403,273 @@
       prog.classList.add('visible'); label.textContent = 'Uploading ' + file.name + '...'; pct.textContent = '0%'; bar.style.width = '0%'; result.innerHTML = '';
       try {
         const formData = new FormData(); formData.append('file', file);
-        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { const v = Math.round(p * 0.3); pct.textContent = v + '%'; bar.style.width = v + '%'; });
-        label.textContent = 'Resizing to ' + resizePreset + '...'; bar.style.width = '30%';
-        const resRes = await fetch('/api/resize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: uploadRes.filename, preset: resizePreset }) });
-        const resData = await resRes.json();
-        if (!resRes.ok) throw new Error(resData.error);
-        pollResize(resData.id, prog, label, pct, bar, result);
+        const uploadRes = await xhrUpload('/api/upload', formData, (p) => { pct.textContent = Math.round(p * 100) + '%'; bar.style.width = (p * 100) + '%'; });
+        rzState.filename = uploadRes.filename;
+        if (rzState.blobUrl) URL.revokeObjectURL(rzState.blobUrl);
+        rzState.blobUrl = URL.createObjectURL(file);
+        prog.classList.remove('visible');
+        rzInitEditor();
       } catch (e) { showToast(e.message || 'Upload failed', 'error'); prog.classList.remove('visible'); }
     }
 
+    function rzInitEditor() {
+      resizeZone.style.display = 'none';
+      const editor = document.getElementById('resizeEditor');
+      editor.classList.add('visible');
+      document.getElementById('rzFilename').textContent = rzState.filename;
+      Object.keys(rzState.sizes).forEach(k => { rzState.sizes[k] = { cropX: 0.5, cropY: 0.5, zoom: 1 }; });
+      document.getElementById('rzZoomSlider').value = 100;
+      document.getElementById('rzZoomVal').textContent = '1.0×';
+      document.getElementById('rzTimeline').value = 0;
+      document.getElementById('rzTime').textContent = '0:00 / 0:00';
+      document.getElementById('rzPlayBtn').innerHTML = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><polygon points="0,0 12,7 0,14"/></svg>';
+      document.getElementById('rzExportProgress').innerHTML = '';
+      document.getElementById('rzExportBtn').disabled = false;
+
+      const vid = document.getElementById('rzCropVideo');
+      const blurBg = document.getElementById('rzBlurBg');
+      const blurFg = document.getElementById('rzBlurFg');
+      vid.src = rzState.blobUrl; blurBg.src = rzState.blobUrl; blurFg.src = rzState.blobUrl;
+
+      vid.onloadedmetadata = () => {
+        rzState.videoW = vid.videoWidth; rzState.videoH = vid.videoHeight;
+        vid.currentTime = 0.5; blurBg.currentTime = 0.5; blurFg.currentTime = 0.5;
+        document.getElementById('rzVideoDims').textContent = rzState.videoW + '×' + rzState.videoH;
+        if (vid.duration && isFinite(vid.duration)) {
+          document.getElementById('rzTimeline').value = Math.round((0.5 / vid.duration) * 1000);
+          document.getElementById('rzTime').textContent = rzFmtTime(0.5) + ' / ' + rzFmtTime(vid.duration);
+        }
+        rzBuildSizeTabs();
+        rzUpdatePreview();
+      };
+    }
+
+    function rzGetCheckedSizes() {
+      return Array.from(document.querySelectorAll('.rz-check[data-size] input:checked')).map(el => el.closest('.rz-check').dataset.size);
+    }
+
+    function rzBuildSizeTabs() {
+      const container = document.getElementById('rzSizeTabs');
+      const checked = rzGetCheckedSizes();
+      if (checked.length === 0) { container.innerHTML = ''; return; }
+      if (!checked.includes(rzState.previewSize)) rzState.previewSize = checked[0];
+      container.innerHTML = checked.map(s => {
+        const p = RZ_PRESETS[s];
+        return '<button class="rz-size-tab' + (s === rzState.previewSize ? ' active' : '') + '" data-size="' + s + '" onclick="rzSwitchPreview(\'' + s + '\')">' + p.label + '</button>';
+      }).join('');
+    }
+
+    function rzSwitchPreview(size) {
+      rzState.previewSize = size;
+      const st = rzState.sizes[size];
+      document.getElementById('rzZoomSlider').value = Math.round(st.zoom * 100);
+      document.getElementById('rzZoomVal').textContent = st.zoom.toFixed(1) + '×';
+      document.querySelectorAll('.rz-size-tab').forEach(t => t.classList.toggle('active', t.dataset.size === size));
+      rzUpdatePreview();
+    }
+
+    document.querySelectorAll('.rz-check[data-size] input').forEach(cb => {
+      cb.addEventListener('change', () => { rzBuildSizeTabs(); rzUpdatePreview(); });
+    });
+    document.querySelectorAll('input[name="rzFillMode"]').forEach(r => {
+      r.addEventListener('change', () => {
+        rzState.fillMode = r.value;
+        const cv = document.getElementById('rzCropVideo');
+        document.getElementById('rzBlurBg').currentTime = cv.currentTime;
+        document.getElementById('rzBlurFg').currentTime = cv.currentTime;
+        if (!cv.paused) { document.getElementById('rzBlurBg').play(); document.getElementById('rzBlurFg').play(); }
+        rzUpdatePreview();
+      });
+    });
+    document.getElementById('rzSafeToggle').addEventListener('change', () => rzUpdateSafeAreas());
+    document.getElementById('rzZoomSlider').addEventListener('input', (e) => {
+      const z = parseInt(e.target.value) / 100;
+      rzState.sizes[rzState.previewSize].zoom = z;
+      document.getElementById('rzZoomVal').textContent = z.toFixed(1) + '×';
+      rzUpdatePreview();
+    });
+
+    function rzUpdatePreview() {
+      const inner = document.getElementById('rzPreviewInner');
+      const preset = RZ_PRESETS[rzState.previewSize];
+      if (!preset) return;
+      inner.style.paddingBottom = '';
+      inner.style.height = '';
+      inner.style.aspectRatio = preset.w + '/' + preset.h;
+
+      const isCrop = rzState.fillMode === 'crop';
+      const cropVid = document.getElementById('rzCropVideo');
+      const blurBg = document.getElementById('rzBlurBg');
+      const blurFg = document.getElementById('rzBlurFg');
+
+      inner.classList.toggle('crop-mode', isCrop);
+      cropVid.style.display = isCrop ? 'block' : 'none';
+      blurBg.style.display = isCrop ? 'none' : 'block';
+      blurFg.style.display = isCrop ? 'none' : 'block';
+      document.getElementById('rzZoomRow').style.display = isCrop ? 'flex' : 'none';
+      document.getElementById('rzDragHint').style.display = isCrop ? '' : 'none';
+
+      if (isCrop && rzState.videoW > 0) {
+        const st = rzState.sizes[rzState.previewSize];
+        const containerW = inner.offsetWidth || 300;
+        const containerH = containerW * preset.h / preset.w;
+        const coverScale = Math.max(containerW / rzState.videoW, containerH / rzState.videoH) * st.zoom;
+        const dispW = rzState.videoW * coverScale;
+        const dispH = rzState.videoH * coverScale;
+        const overflowX = Math.max(0, dispW - containerW);
+        const overflowY = Math.max(0, dispH - containerH);
+        cropVid.style.width = dispW + 'px';
+        cropVid.style.height = dispH + 'px';
+        cropVid.style.left = (-overflowX * st.cropX) + 'px';
+        cropVid.style.top = (-overflowY * st.cropY) + 'px';
+      }
+      rzUpdateSafeAreas();
+    }
+
+    function rzUpdateSafeAreas() {
+      const on = document.getElementById('rzSafeToggle').checked;
+      const preset = RZ_PRESETS[rzState.previewSize];
+      const top = document.getElementById('rzSafeTop');
+      const bot = document.getElementById('rzSafeBot');
+      if (on && preset && (preset.safeTop > 0 || preset.safeBot > 0)) {
+        top.style.height = (preset.safeTop * 100) + '%';
+        bot.style.height = (preset.safeBot * 100) + '%';
+        top.classList.toggle('visible', preset.safeTop > 0);
+        bot.classList.toggle('visible', preset.safeBot > 0);
+      } else {
+        top.classList.remove('visible');
+        bot.classList.remove('visible');
+      }
+    }
+
+    // Drag-to-reposition
+    let rzDragging = false, rzDragStartX = 0, rzDragStartY = 0, rzDragStartCX = 0, rzDragStartCY = 0;
+    const rzInner = document.getElementById('rzPreviewInner');
+
+    function rzDragStart(x, y) {
+      if (rzState.fillMode !== 'crop') return;
+      rzDragging = true;
+      rzDragStartX = x; rzDragStartY = y;
+      const st = rzState.sizes[rzState.previewSize];
+      rzDragStartCX = st.cropX; rzDragStartCY = st.cropY;
+      rzInner.classList.add('dragging');
+    }
+    function rzDragMove(x, y) {
+      if (!rzDragging) return;
+      const preset = RZ_PRESETS[rzState.previewSize];
+      const st = rzState.sizes[rzState.previewSize];
+      const containerW = rzInner.offsetWidth || 300;
+      const containerH = containerW * preset.h / preset.w;
+      const coverScale = Math.max(containerW / rzState.videoW, containerH / rzState.videoH) * st.zoom;
+      const overflowX = Math.max(1, rzState.videoW * coverScale - containerW);
+      const overflowY = Math.max(1, rzState.videoH * coverScale - containerH);
+      st.cropX = Math.max(0, Math.min(1, rzDragStartCX - (x - rzDragStartX) / overflowX));
+      st.cropY = Math.max(0, Math.min(1, rzDragStartCY - (y - rzDragStartY) / overflowY));
+      rzUpdatePreview();
+    }
+    function rzDragEnd() { if (rzDragging) { rzDragging = false; rzInner.classList.remove('dragging'); } }
+
+    rzInner.addEventListener('mousedown', (e) => { rzDragStart(e.clientX, e.clientY); e.preventDefault(); });
+    document.addEventListener('mousemove', (e) => rzDragMove(e.clientX, e.clientY));
+    document.addEventListener('mouseup', rzDragEnd);
+    rzInner.addEventListener('touchstart', (e) => { if (e.touches.length === 1) { rzDragStart(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+    document.addEventListener('touchmove', (e) => { if (rzDragging && e.touches.length === 1) rzDragMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    document.addEventListener('touchend', rzDragEnd);
+
+    // Scrubber
+    function rzTogglePlay() {
+      const vid = document.getElementById('rzCropVideo');
+      const bg = document.getElementById('rzBlurBg');
+      const fg = document.getElementById('rzBlurFg');
+      const btn = document.getElementById('rzPlayBtn');
+      if (vid.paused) {
+        vid.play(); bg.play(); fg.play();
+        btn.innerHTML = '<svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><rect x="0" y="0" width="3" height="14"/><rect x="7" y="0" width="3" height="14"/></svg>';
+      } else {
+        vid.pause(); bg.pause(); fg.pause();
+        btn.innerHTML = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><polygon points="0,0 12,7 0,14"/></svg>';
+      }
+    }
+    document.getElementById('rzTimeline').addEventListener('input', (e) => {
+      const vid = document.getElementById('rzCropVideo');
+      const t = (parseFloat(e.target.value) / 1000) * (vid.duration || 0);
+      vid.currentTime = t;
+      document.getElementById('rzBlurBg').currentTime = t;
+      document.getElementById('rzBlurFg').currentTime = t;
+    });
+    document.getElementById('rzCropVideo').addEventListener('timeupdate', () => {
+      const vid = document.getElementById('rzCropVideo');
+      if (!vid.duration) return;
+      document.getElementById('rzTimeline').value = Math.round((vid.currentTime / vid.duration) * 1000);
+      document.getElementById('rzTime').textContent = rzFmtTime(vid.currentTime) + ' / ' + rzFmtTime(vid.duration);
+    });
+    document.getElementById('rzCropVideo').addEventListener('ended', () => {
+      document.getElementById('rzPlayBtn').innerHTML = '<svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><polygon points="0,0 12,7 0,14"/></svg>';
+      document.getElementById('rzBlurBg').pause();
+      document.getElementById('rzBlurFg').pause();
+    });
+    function rzFmtTime(s) { const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return m + ':' + (sec < 10 ? '0' : '') + sec; }
+
+    function rzResetPosition() {
+      const st = rzState.sizes[rzState.previewSize];
+      st.cropX = 0.5; st.cropY = 0.5; st.zoom = 1;
+      document.getElementById('rzZoomSlider').value = 100;
+      document.getElementById('rzZoomVal').textContent = '1.0×';
+      rzUpdatePreview();
+    }
+
+    function rzChangeVideo() {
+      document.getElementById('rzCropVideo').pause();
+      document.getElementById('rzBlurBg').pause();
+      document.getElementById('rzBlurFg').pause();
+      document.getElementById('resizeEditor').classList.remove('visible');
+      resizeZone.style.display = '';
+      if (rzState.blobUrl) { URL.revokeObjectURL(rzState.blobUrl); rzState.blobUrl = null; }
+      rzState.filename = null;
+    }
+
+    async function rzExport() {
+      const checked = rzGetCheckedSizes();
+      if (checked.length === 0) { showToast('Select at least one size', 'error'); return; }
+      if (!rzState.filename) return;
+      const btn = document.getElementById('rzExportBtn');
+      btn.disabled = true; btn.textContent = 'Exporting...';
+      const progContainer = document.getElementById('rzExportProgress');
+      progContainer.innerHTML = '';
+
+      for (const size of checked) {
+        const st = rzState.sizes[size];
+        const preset = RZ_PRESETS[size];
+        const item = document.createElement('div');
+        item.className = 'rz-export-item';
+        item.innerHTML = '<div class="progress-top"><span class="progress-label">' + preset.label + ' &mdash; resizing...</span><span class="progress-pct">0%</span></div><div class="bar-track"><div class="bar-fill"></div></div><div class="progress-result"></div>';
+        progContainer.appendChild(item);
+
+        try {
+          const body = { filename: rzState.filename, preset: size, mode: rzState.fillMode };
+          if (rzState.fillMode === 'crop') { body.cropX = st.cropX; body.cropY = st.cropY; body.zoom = st.zoom; }
+          const res = await fetch('/api/resize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          await new Promise((resolve, reject) => {
+            const iv = setInterval(async () => {
+              try {
+                const r = await fetch('/api/resize-progress/' + data.id);
+                const d = await r.json();
+                item.querySelector('.bar-fill').style.width = d.progress + '%';
+                item.querySelector('.progress-pct').textContent = Math.round(d.progress) + '%';
+                if (d.status === 'complete') { clearInterval(iv); item.querySelector('.progress-label').textContent = d.filename; item.querySelector('.progress-result').innerHTML = '<strong style="color:var(--success)">✓ Done</strong>'; resolve(); }
+                else if (d.status === 'error') { clearInterval(iv); item.querySelector('.progress-result').innerHTML = '<span style="color:var(--error)">' + escapeHtml(d.error || 'Failed') + '</span>'; reject(new Error(d.error)); }
+              } catch (e) { clearInterval(iv); reject(e); }
+            }, 500);
+          });
+        } catch (e) { showToast(e.message || 'Resize failed', 'error'); }
+      }
+      btn.disabled = false; btn.textContent = 'Export Selected Sizes';
+      loadDownloads();
+    }
+
+    // Legacy support for old resize flow
     function pollResize(id, prog, label, pct, bar, result) {
       const iv = setInterval(async () => {
         try {
@@ -2225,7 +2678,7 @@
           const overall = 30 + Math.round(d.progress * 0.7);
           bar.style.width = overall + '%'; pct.textContent = overall + '%';
           if (d.filename) label.textContent = 'Resizing ' + d.filename + '...';
-          if (d.status === 'complete') { clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%'; label.textContent = d.filename; result.innerHTML = '<strong>Resized for Instagram</strong>'; loadDownloads(); }
+          if (d.status === 'complete') { clearInterval(iv); bar.style.width = '100%'; pct.textContent = '100%'; label.textContent = d.filename; result.innerHTML = '<strong>Resized</strong>'; loadDownloads(); }
           else if (d.status === 'error') { clearInterval(iv); showToast(d.error || 'Resize failed', 'error'); prog.classList.remove('visible'); }
         } catch { clearInterval(iv); }
       }, 500);
@@ -2336,7 +2789,7 @@
           const safe = escapeHtml(f.name);
           const isVideo = videoExts.has(ext);
           const isCompressed = f.name.includes('_shrunk.') || /_\d+mb\./.test(f.name);
-          const isResized = /_ig_(reels|portrait|square|landscape)\./.test(f.name);
+          const isResized = /_ig_(reels|portrait|square|landscape)\./.test(f.name) || /_(9x16|4x5|1x1)\./.test(f.name);
           const isOver30 = f.size > 30 * 1024 * 1024;
           const isCut = /_(?:intro|verse|chorus|hook|drop|bridge|outro)_\d+s\./.test(f.name);
           const isBoosted = f.name.includes('_boosted.');

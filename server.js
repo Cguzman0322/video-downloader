@@ -671,7 +671,18 @@ app.get('/api/downloads', (req, res) => {
 });
 
 app.get('/api/open-downloads', (req, res) => {
-  spawn('open', [DOWNLOADS_DIR]);
+  try {
+    const files = fs.readdirSync(DOWNLOADS_DIR)
+      .filter(f => !f.startsWith('.'))
+      .map(f => ({ name: f, time: fs.statSync(path.join(DOWNLOADS_DIR, f)).mtimeMs }))
+      .sort((a, b) => b.time - a.time);
+    const target = files.length > 0
+      ? path.join(DOWNLOADS_DIR, files[0].name)
+      : DOWNLOADS_DIR;
+    spawn('open', ['-R', target]);
+  } catch {
+    spawn('open', [DOWNLOADS_DIR]);
+  }
   res.json({ ok: true });
 });
 
@@ -833,20 +844,21 @@ app.get('/api/shrink-progress/:id', (req, res) => {
 });
 
 const RESIZE_PRESETS = {
+  'vertical': { w: 1080, h: 1920, label: '9x16' },
+  'portrait': { w: 1080, h: 1350, label: '4x5' },
+  'square': { w: 1080, h: 1080, label: '1x1' },
   'reels': { w: 1080, h: 1920, label: 'ig_reels' },
-  'portrait': { w: 1080, h: 1350, label: 'ig_portrait' },
-  'square': { w: 1080, h: 1080, label: 'ig_square' },
   'landscape': { w: 1080, h: 566, label: 'ig_landscape' },
 };
 
 app.post('/api/resize', (req, res) => {
-  const { filename, preset } = req.body;
+  const { filename, preset, mode, cropX, cropY, zoom } = req.body;
   if (!filename) return res.status(400).json({ error: 'Filename is required' });
   if (filename.includes('/') || filename.includes('\\') || filename.includes('..'))
     return res.status(400).json({ error: 'Invalid filename' });
 
   const p = RESIZE_PRESETS[preset];
-  if (!p) return res.status(400).json({ error: 'Invalid preset. Use: reels, portrait, square, landscape' });
+  if (!p) return res.status(400).json({ error: 'Invalid preset' });
 
   const inputPath = path.join(DOWNLOADS_DIR, filename);
   if (!fs.existsSync(inputPath)) return res.status(404).json({ error: 'File not found' });
@@ -857,16 +869,40 @@ app.post('/api/resize', (req, res) => {
   const outputPath = path.join(DOWNLOADS_DIR, outputFilename);
   const id = crypto.randomBytes(8).toString('hex');
 
+  const fillMode = mode || 'crop';
+  const z = Math.max(1, parseFloat(zoom) || 1);
+  const cx = Math.max(0, Math.min(1, isNaN(parseFloat(cropX)) ? 0.5 : parseFloat(cropX)));
+  const cy = Math.max(0, Math.min(1, isNaN(parseFloat(cropY)) ? 0.5 : parseFloat(cropY)));
+
   execFile('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', inputPath], (err, stdout) => {
     let totalDuration = 0;
+    let videoW = 0, videoH = 0;
     if (!err) {
-      try { totalDuration = parseFloat(JSON.parse(stdout).format.duration) || 0; } catch {}
+      try {
+        const probeData = JSON.parse(stdout);
+        totalDuration = parseFloat(probeData.format.duration) || 0;
+        const vs = probeData.streams.find(s => s.codec_type === 'video');
+        if (vs) { videoW = vs.width || 0; videoH = vs.height || 0; }
+      } catch {}
     }
 
     activeResizes.set(id, { progress: 0, status: 'resizing', filename: outputFilename, error: null });
     res.json({ id });
 
-    const vf = `split[bg][fg];[bg]scale=${p.w}:${p.h}:force_original_aspect_ratio=increase,crop=${p.w}:${p.h},boxblur=20:5[bg_blur];[fg]scale=${p.w}:${p.h}:force_original_aspect_ratio=decrease,setsar=1[fg_scaled];[bg_blur][fg_scaled]overlay=(W-w)/2:(H-h)/2,setsar=1`;
+    let vf;
+    if (fillMode === 'blur') {
+      vf = `split[bg][fg];[bg]scale=${p.w}:${p.h}:force_original_aspect_ratio=increase,crop=${p.w}:${p.h},boxblur=20:5,eq=brightness=-0.15:saturation=0.8[bg_blur];[fg]scale=${p.w}:${p.h}:force_original_aspect_ratio=decrease,setsar=1[fg_scaled];[bg_blur][fg_scaled]overlay=(W-w)/2:(H-h)/2,setsar=1`;
+    } else if (videoW > 0 && videoH > 0) {
+      const sf = Math.max(p.w / videoW, p.h / videoH) * z;
+      const sw = Math.ceil(videoW * sf / 2) * 2;
+      const sh = Math.ceil(videoH * sf / 2) * 2;
+      const mx = Math.max(0, sw - p.w);
+      const my = Math.max(0, sh - p.h);
+      vf = `scale=${sw}:${sh},crop=${p.w}:${p.h}:${Math.round(mx * cx)}:${Math.round(my * cy)},setsar=1`;
+    } else {
+      vf = `scale=${p.w}:${p.h}:force_original_aspect_ratio=increase,crop=${p.w}:${p.h},setsar=1`;
+    }
+
     const args = ['-y', '-i', inputPath, '-vf', vf,
       '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-pix_fmt', 'yuv420p',
       '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
