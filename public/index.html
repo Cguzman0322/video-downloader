@@ -2430,6 +2430,8 @@
       const blurBg = document.getElementById('rzBlurBg');
       const blurFg = document.getElementById('rzBlurFg');
       vid.src = rzState.blobUrl; blurBg.src = rzState.blobUrl; blurFg.src = rzState.blobUrl;
+      rzBuildSizeTabs();
+      rzUpdatePreview();
 
       vid.onloadedmetadata = () => {
         rzState.videoW = vid.videoWidth; rzState.videoH = vid.videoHeight;
